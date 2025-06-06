@@ -1,0 +1,69 @@
+{
+    "id": "4",
+    "team_id": "team-4",
+    "name": "Oil & Gas - Investment research",
+    "status": "visible",
+    "protected": true,
+    "created": "2025-01-01T00:00:00.000Z",
+    "created_by": "Admin",
+    "agents": [
+        {
+            "input_key": "40001",
+            "type": "MagenticOne",
+            "name": "Coder",
+            "system_message": "",
+            "description": "",
+            "icon": "Terminal",
+            "index_name": ""
+        },
+        {
+            "input_key": "40002",
+            "type": "MagenticOne",
+            "name": "Executor",
+            "system_message": "",
+            "description": "",
+            "icon": "MonitorCog",
+            "index_name": ""
+        },
+        {
+            "input_key": "40003",
+            "type": "MagenticOne",
+            "name": "FileSurfer",
+            "system_message": "",
+            "description": "",
+            "icon": "File",
+            "index_name": ""
+        },
+        {
+            "input_key": "40004",
+            "type": "MagenticOne",
+            "name": "WebSurfer",
+            "system_message": "",
+            "description": "",
+            "icon": "Globe",
+            "index_name": ""
+        },
+        {
+            "input_key": "40006",
+            "type": "RAG",
+            "name": "OilGasKnowledge",
+            "system_message": "",
+            "description": "An agent that has access to a knowledge base of International Energy Agency (IEA) Analysis and forecast to 2030 and can handle RAG tasks, call this agent if you are getting questions on your knowledge base.",
+            "icon": "Search",
+            "index_name": "ag-demo-market"
+        }
+    ],
+    "description": "Team helping with decision support on comprehensive, data-driven assessment of current market forecasts, commodity price trends, and OPEC announcements.",
+    "logo": "ChartNoAxesCombined",
+    "plan": "Decision support team through comprehensive, data-driven assessments...",
+    "starting_tasks": [
+        {
+            "id": "task-4",
+            "name": "Market assessment",
+            "prompt": "Use advanced financial modelling, scenario analysis, geopolitical forecasting, and risk quantification to produce a comprehensive, data-driven assessment of current market forecasts, commodity price trends, and OPEC announcements. In this process, identify and deeply evaluate the relative growth potential of various upstream investment areas—ranging from unconventional reservoirs to deepwater projects and advanced EOR techniques—across Africa, the Middle East, and Central Europe. Based on publicly available data (e.g., IEA, EIA, and OPEC bulletins), synthesize your findings into specific, country-level recommendations that incorporate ROI calculations, scenario-based risk assessments, and robust justifications reflecting both market and geopolitical considerations. Present the final deliverable as a well-structured table​",
+            "created": "2025-04-07T12:04:51.887Z",
+            "creator": "system",
+            "logo": "ChartNoAxesCombined"
+        }
+    ]
+}

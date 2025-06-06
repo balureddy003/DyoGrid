@@ -1,0 +1,76 @@
+{
+    "id": "cba96ae2-f28b-4c0e-92f3-d8069430caf2",
+    "team_id": "cba96ae2-f28b-4c0e-92f3-d8069430caf2",
+    "name": "Hospitality",
+    "status": "visible",
+    "protected": false,
+    "created": "2025-01-01T00:00:00.000Z",
+    "created_by": "Admin",
+    "agents": [
+        {
+            "input_key": "cba96ae2-0001",
+            "type": "MagenticOne",
+            "name": "Coder",
+            "system_message": "",
+            "description": "",
+            "icon": "Terminal",
+            "index_name": ""
+        },
+        {
+            "input_key": "cba96ae2-0002",
+            "type": "MagenticOne",
+            "name": "Executor",
+            "system_message": "",
+            "description": "Execute code from Coder Agent",
+            "icon": "MonitorCog",
+            "index_name": ""
+        },
+        {
+            "input_key": "cba96ae2-0004",
+            "type": "MagenticOne",
+            "name": "WebSurfer",
+            "system_message": "",
+            "description": "Get OTA prices from the web",
+            "icon": "Globe"
+        },
+        {
+            "input_key": "625fb48c-719b-4318-af31-e6df756ed7ef",
+            "type": "Custom",
+            "name": "HotelSmartConcierge",
+            "system_message": "You are Hotel-Smart-Concierge. For every guest question: 1) call Coder Agent to join Inventory with request; 2) call Web-Surfer to fetch OTA price if not supplied; 3) call Price-Advisor to compute direct price & perks; 4) if guest accepts, write personalized email",
+            "description": "AssistantAgent\tMain conversational brain; decides when to call tools and other agents.",
+            "icon": "Bot",
+            "index_name": ""
+        },
+        {
+            "input_key": "6f43ec7f-6bac-465c-b728-bfdf4b72e995",
+            "type": "Custom",
+            "name": "PriceAdvisor",
+            "system_message": "Given: dates, room type, OTA price, current availability, base rate. Rules: • Target gross margin ≥ 25 %. • Example how to reason: If Available < 10 % set rate = max(OTA-5 %, base+30). Else rate = base + 10. Suggest one upsell (late checkout, breakfast) worth 5–8 % of total",
+            "description": "Calculates best direct rate and upsell bundle.",
+            "icon": "ChartNoAxesCombined",
+            "index_name": ""
+        },
+        {
+            "input_key": "3344084fx-18e6-48ce-b7ad-3afa61720351",
+            "type": "CustomMCP",
+            "name": "DataConnector",
+            "system_message": "You are helpful Data provider. Your task is to porivde data in form of CSV format.",
+            "description": "This agent is serving data. Use where there is need to fetch data for analysis.",
+            "icon": "DatabaseZap",
+            "index_name": ""
+        }
+    ],
+    "description": "Hotel booking",
+    "logo": "Wrench",
+    "plan": "Free",
+    "starting_tasks": [
+        {
+            "id": "task-1",
+            "name": "Generate email offer",
+            "prompt": "You are Hotel-Smart-Concierge. A guest is interested in a stay on 2024-06-13 for 2 nights, STD room, at Royal Senses hotel in Greece. Handle the entire flow end-to-end: 1. use 'inventory' table to join the guest’s requested dates/room type with Inventory Data and return availability + base rate. 2. Call Web-Surfer Agent to fetch the lowest current OTA price from Booking.com for the same stay from the internet – do your best to estimate the price from multiple internet sources.3. Send the data to Price-Advisor Agent to compute the best direct rate and one upsell perk (e.g., breakfast, late checkout) following its margin rules. 4. Present the personalized offer to the guest, clearly showing the saving versus the OTA. 5. Generate personalized email to a guest with the offer.",
+            "created": "2025-04-24T12:04:51.887Z",
+            "creator": "system"
+        }
+    ]
+}

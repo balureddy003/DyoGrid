@@ -1,0 +1,57 @@
+{
+    "id": "9",
+    "team_id": "team-9",
+    "name": "Data Analysis Team",
+    "status": "visible",
+    "created": "2025-01-01T00:00:00.000Z",
+    "created_by": "Admin",
+    "agents": [
+        {
+            "input_key": "36b4084fx-0001",
+            "type": "MagenticOne",
+            "name": "Coder",
+            "system_message": "",
+            "description": "",
+            "icon": "Terminal"
+        },
+        {
+            "input_key": "36b4084fx-20002",
+            "type": "MagenticOne",
+            "name": "Executor",
+            "system_message": "",
+            "description": "",
+            "icon": "MonitorCog",
+            "index_name": ""
+        },
+        {
+            "input_key": "36b4084fx-18e6-48ce-b7ad-3afa61720351",
+            "type": "CustomMCP",
+            "name": "DataConnector",
+            "system_message": "You are helpful Data provider. Your task is to porivde data in form of CSV format.",
+            "description": "This agent is serving data. Use where there is need to fetch data for analysis.",
+            "icon": "DatabaseZap",
+            "index_name": ""
+        }
+    ],
+    "description": "Data Analysis team uses MCP to fetch data from files and performs analysis.",
+    "logo": "ChartNoAxesCombined",
+    "plan": "Data Analysis Team Plan",
+    "starting_tasks": [
+        {
+            "id": "task-1",
+            "name": "Average Temperature",
+            "prompt": "Analyze sensor data and calculate average temperature for sensor COMP-001. Data are in 'sensor' table.",
+            "created": "2025-04-24T12:04:51.887Z",
+            "creator": "system",
+            "logo": "ChartNoAxesCombined"
+        },
+        {
+            "id": "task-2",
+            "name": "Plot data",
+            "prompt": "Analyze sensor data in 'sensor' table. Plot time series for Temperature using simple mathplotlib. Execute script and describe the results.",
+            "created": "2025-04-24T12:04:51.887Z",
+            "creator": "system",
+            "logo": "AudioWaveform"
+        }
+    ]
+}

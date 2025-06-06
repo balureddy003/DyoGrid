@@ -1,0 +1,51 @@
+BookingID,GuestID,GuestName,CheckIn,CheckOut,PrefRoom,Status,OTAOfferUSD,SpecialReq
+B001,G001,Anna Novak,2024-06-15,2024-06-17,DLX,In-Progress,210,Early check-in
+B002,G002,Lukas Meyer,2024-06-18,2024-06-21,STD,Quoted,160,None
+B003,G003,Chen Li,2024-06-20,2024-06-23,SUI,In-Progress,350,Allergy-free
+B004,G004,Maria Rossi,2024-06-22,2024-06-24,STD,In-Progress,155,Baby crib
+B005,G005,David Smith,2024-06-25,2024-06-28,DLX,Cancelled,0,None
+B006,G006,Eva Horáková,2024-06-12,2024-06-14,STD,Confirmed,148,High floor
+B007,G007,Tomáš Dvořák,2024-06-14,2024-06-16,PRM,In-Progress,420,Late checkout
+B008,G008,Sofia García,2024-06-16,2024-06-19,DLX,Confirmed,200,Early check-in
+B009,G009,Kenji Tanaka,2024-06-17,2024-06-20,SUI,In-Progress,330,None
+B010,G010,Rachel Green,2024-06-19,2024-06-21,STD,Confirmed,150,Extra pillows
+B011,G011,Matej Kovář,2024-06-21,2024-06-23,DLX,In-Progress,195,High floor
+B012,G012,Nina Petrova,2024-06-23,2024-06-26,SUI,Confirmed,340,Late checkout
+B013,G013,Oliver Jones,2024-06-24,2024-06-27,STD,In-Progress,152,None
+B014,G014,Isabella Chen,2024-06-26,2024-06-29,DLX,Confirmed,205,Early check-in
+B015,G015,Jakub Nowak,2024-06-27,2024-06-30,SUI,In-Progress,360,High floor
+B016,G016,Emily Clark,2024-06-28,2024-07-01,PRM,In-Progress,435,Baby crib
+B017,G017,Lucas Martin,2024-06-29,2024-07-02,STD,Confirmed,158,None
+B018,G018,Giulia Bianchi,2024-06-30,2024-07-03,DLX,In-Progress,215,Allergy-free
+B019,G019,Yusuf Khan,2024-07-01,2024-07-04,SUI,Confirmed,345,Early check-in
+B020,G020,Anne Dubois,2024-07-02,2024-07-05,STD,In-Progress,149,Late checkout
+B021,G021,Hans Müller,2024-06-10,2024-06-12,DLX,Confirmed,198,None
+B022,G022,Laura López,2024-06-11,2024-06-13,SUI,In-Progress,325,High floor
+B023,G023,Peter Wilson,2024-06-13,2024-06-15,STD,Confirmed,155,None
+B024,G024,Aiko Sato,2024-06-15,2024-06-17,DLX,In-Progress,205,Early check-in
+B025,G025,Dmitry Ivanov,2024-06-18,2024-06-21,SUI,Cancelled,0,None
+B026,G026,Blanka Říhová,2024-06-20,2024-06-23,PRM,In-Progress,440,High floor
+B027,G027,Jack Lee,2024-06-22,2024-06-25,STD,Confirmed,150,Extra pillows
+B028,G028,Helena Novak,2024-06-24,2024-06-27,DLX,In-Progress,210,None
+B029,G029,Noah Brown,2024-06-26,2024-06-29,SUI,In-Progress,335,Baby crib
+B030,G030,Emma Davis,2024-06-28,2024-07-01,STD,Confirmed,154,Late checkout
+B031,G031,Lea Berger,2024-06-30,2024-07-03,DLX,In-Progress,220,None
+B032,G032,Ahmad Ali,2024-07-02,2024-07-05,SUI,Confirmed,350,Allergy-free
+B033,G033,Grace Kim,2024-07-04,2024-07-06,PRM,In-Progress,455,High floor
+B034,G034,Tobias Hahn,2024-07-03,2024-07-05,STD,Cancelled,0,None
+B035,G035,Li Wei,2024-06-14,2024-06-16,SUI,In-Progress,340,Early check-in
+B036,G036,Anna Schmidt,2024-06-16,2024-06-19,DLX,Confirmed,200,None
+B037,G037,Bruno Silva,2024-06-17,2024-06-20,STD,In-Progress,153,High floor
+B038,G038,Mira Kovačević,2024-06-19,2024-06-22,SUI,Confirmed,338,Late checkout
+B039,G039,Carlos Ortiz,2024-06-21,2024-06-24,DLX,In-Progress,210,Early check-in
+B040,G040,Patricia Lee,2024-06-23,2024-06-26,PRM,In-Progress,445,Extra pillows
+B041,G041,Kate Evans,2024-06-25,2024-06-28,STD,Confirmed,157,None
+B042,G042,Sven Lindberg,2024-06-27,2024-06-30,DLX,In-Progress,215,Allergy-free
+B043,G043,Jia Yu,2024-06-29,2024-07-02,SUI,Confirmed,348,High floor
+B044,G044,Olivia Martin,2024-07-01,2024-07-04,STD,In-Progress,150,Baby crib
+B045,G045,Marc Dubois,2024-07-03,2024-07-06,DLX,In-Progress,225,Late checkout
+B046,G046,Seung Park,2024-07-04,2024-07-07,SUI,Confirmed,355,None
+B047,G047,Lara Fischer,2024-07-05,2024-07-08,PRM,In-Progress,460,Early check-in
+B048,G048,Juan Pérez,2024-07-06,2024-07-09,STD,Confirmed,159,None
+B049,G049,Sara Ahmed,2024-07-07,2024-07-10,DLX,In-Progress,230,High floor
+B050,G050,Zdeněk Král,2024-07-08,2024-07-11,SUI,In-Progress,360,Allergy-free
