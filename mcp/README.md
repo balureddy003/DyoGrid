@@ -28,10 +28,6 @@ or
 uv run fastapi dev main.py --port 8333
 ```
 
-## Deploy to Azure Container Apps
-done via AZD
-```bash
-azd deploy mcp
-```
+
 
 
