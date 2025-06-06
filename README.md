@@ -23,4 +23,7 @@ npm run dev
 
 
 ### install litellm
+uv venv
+pip install litellm
+pip install 'litellm[proxy]'
  litellm --config litellm.config.yaml
