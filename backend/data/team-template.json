@@ -1,0 +1,55 @@
+{
+    "id": "99",
+    "team_id": "team-99",
+    "name": "Default Team",
+    "logo": "Wrench",
+    "plan": "Original MagenticOne Team",
+    "agents": [
+        {
+            "input_key": "0001",
+            "type": "MagenticOne",
+            "name": "Coder",
+            "system_message": "",
+            "description": "",
+            "icon": "👨‍💻",
+            "index_name": ""
+        },
+        {
+            "input_key": "0002",
+            "type": "MagenticOne",
+            "name": "Executor",
+            "system_message": "",
+            "description": "",
+            "icon": "💻",
+            "index_name": ""
+        },
+        {
+            "input_key": "0003",
+            "type": "MagenticOne",
+            "name": "FileSurfer",
+            "system_message": "",
+            "description": "",
+            "icon": "📂",
+            "index_name": ""
+        },
+        {
+            "input_key": "0004",
+            "type": "MagenticOne",
+            "name": "WebSurfer",
+            "system_message": "",
+            "description": "",
+            "icon": "🏄‍♂️",
+            "index_name": ""
+        }
+    ],
+    "description": "Original MagenticOne Team. Includes Coder, Executor, FileSurfer and WebSurfer.",
+    "starting_tasks": [
+        {
+            "id": "task-1",
+            "name": "Find restaurant",
+            "prompt": "Find me a French restaurant in Dubai with 2 Michelin stars?",
+            "created": "2025-04-07T12:04:51.887Z",
+            "creator": "system"
+        }
+    ]
+}
