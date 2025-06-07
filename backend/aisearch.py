@@ -47,7 +47,6 @@ from azure.storage.blob.aio import BlobServiceClient as AsyncBlobServiceClient
 import numpy as np
 import faiss
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from openai import AzureOpenAI
 from dotenv import load_dotenv
 from typing import List
 from fastapi import UploadFile
@@ -59,17 +58,11 @@ EMBEDDING_MODEL_NAME = "text-embedding-3-small"
 RAG_BACKEND = os.getenv("RAG_BACKEND", "azure").lower()
 
 
-def get_embedding_client() -> AzureOpenAI:
-    """Return an AzureOpenAI client for computing embeddings."""
-    credential = DefaultAzureCredential()
-    token_provider = get_bearer_token_provider(
-        credential, "https://cognitiveservices.azure.com/.default"
-    )
-    return AzureOpenAI(
-        api_version="2024-12-01-preview",
-        azure_ad_token_provider=token_provider,
-        timeout=int(os.getenv("OPENAI_TIMEOUT", 60)),
-    )
+def get_embedding_client():
+    """Return an embedding client based on the configured LLM provider."""
+    from llm_config import build_embedding_client
+
+    return build_embedding_client()
 
 def load_azd_env():
     # """Get path to current azd env file and load file using python-dotenv"""

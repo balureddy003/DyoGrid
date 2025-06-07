@@ -93,3 +93,31 @@ def build_chat_client(agent_name: str | None = None, agent_type: str | None = No
     else:
         return OpenAIChatCompletionClient(timeout=timeout, **cfg)
 
+
+def build_embedding_client():
+    """Create an OpenAI/AzureOpenAI client for embeddings based on env config."""
+    from openai import AzureOpenAI, OpenAI
+    from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+
+    provider = get_llm_provider()
+    timeout = int(os.getenv("OPENAI_TIMEOUT", 60))
+
+    if provider == "azure":
+        credential = DefaultAzureCredential()
+        token_provider = get_bearer_token_provider(
+            credential, "https://cognitiveservices.azure.com/.default"
+        )
+        return AzureOpenAI(
+            api_version="2024-12-01-preview",
+            azure_ad_token_provider=token_provider,
+            timeout=timeout,
+        )
+    elif provider == "ollama":
+        return OpenAI(
+            base_url=os.getenv("LITELLM_BASE_URL", "http://localhost:4000/v1"),
+            api_key=os.getenv("LITELLM_API_KEY", "sk-no-key-needed"),
+            timeout=timeout,
+        )
+    else:
+        raise ValueError(f"Unsupported provider: {provider}")
+
