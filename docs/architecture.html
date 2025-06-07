@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DyoGrid Architecture</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Architecture Overview</h1>
+</header>
+<nav>
+  <a href="index.html">Home</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="architecture.html">Architecture</a>
+</nav>
+<main>
+<p>DyoGrid is organized into several components. The repository contains a Python backend, a React-based frontend, and optional agent controller services. Below is a high-level overview.</p>
+<h2>Backend</h2>
+<p>The backend provides FastAPI endpoints and utilities for orchestrating agents.</p>
+<ul>
+<li><code>main.py</code> &ndash; FastAPI application with endpoints for chat and file uploads.</li>
+<li><code>magentic_one_custom_agent.py</code> &ndash; example of a custom agent implementation.</li>
+<li><code>orchestration_utils.py</code> &ndash; helper class for stopping agent loops when tasks are done.</li>
+<li><code>llm_config.py</code> &ndash; reads environment variables to configure LLM providers such as Azure OpenAI or an Ollama proxy.</li>
+</ul>
+<h2>Frontend</h2>
+<p>The frontend is built with React, Vite and Tailwind CSS. It offers a chat interface and agent management UI.</p>
+<ul>
+<li>To develop locally, run <code>npm install</code> and <code>npm run dev</code> inside <code>frontend/</code>.</li>
+<li>The build output can be deployed to static hosting or used with Azure Static Web Apps.</li>
+</ul>
+<h2>MCP Server</h2>
+<p>The <code>mcp/</code> directory contains an example remote MCP server using FastAPI and SSE transport. It can be run with <code>uv run fastapi dev main.py</code>.</p>
+</main>
+<footer>
+  <p>&copy; 2024 DyoGrid</p>
+</footer>
+</body>
+</html>
