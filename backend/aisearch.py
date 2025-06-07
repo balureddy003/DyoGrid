@@ -46,7 +46,8 @@ from azure.storage.blob import BlobServiceClient as SyncBlobServiceClient
 from azure.storage.blob.aio import BlobServiceClient as AsyncBlobServiceClient
 import numpy as np
 import faiss
-from sentence_transformers import SentenceTransformer
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from openai import AzureOpenAI
 from dotenv import load_dotenv
 from typing import List
 from fastapi import UploadFile
@@ -56,6 +57,19 @@ from fastapi import UploadFile
 EMBEDDINGS_DIMENSIONS = 1536
 EMBEDDING_MODEL_NAME = "text-embedding-3-small"
 RAG_BACKEND = os.getenv("RAG_BACKEND", "azure").lower()
+
+
+def get_embedding_client() -> AzureOpenAI:
+    """Return an AzureOpenAI client for computing embeddings."""
+    credential = DefaultAzureCredential()
+    token_provider = get_bearer_token_provider(
+        credential, "https://cognitiveservices.azure.com/.default"
+    )
+    return AzureOpenAI(
+        api_version="2024-12-01-preview",
+        azure_ad_token_provider=token_provider,
+        timeout=int(os.getenv("OPENAI_TIMEOUT", 60)),
+    )
 
 def load_azd_env():
     # """Get path to current azd env file and load file using python-dotenv"""
@@ -285,10 +299,13 @@ async def process_upload_and_index(index_name: str, upload_files: List[UploadFil
             except Exception:
                 docs.append(content.decode("utf-8", errors="ignore"))
 
-        embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
-        embeddings = embedding_model.encode(docs)
+        embedding_client = get_embedding_client()
+        response = embedding_client.embeddings.create(
+            input=docs, model=EMBEDDING_MODEL_NAME
+        )
+        embeddings = np.array([d.embedding for d in response.data])
         index = faiss.IndexFlatL2(embeddings.shape[1])
-        index.add(np.array(embeddings))
+        index.add(embeddings)
         index_path = os.path.join(docs_dir, f"{index_name}.faiss")
         faiss.write_index(index, index_path)
         with open(f"{index_path}.docs", "w", encoding="utf-8") as f:

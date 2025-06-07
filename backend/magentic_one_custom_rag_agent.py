@@ -9,7 +9,8 @@ except ImportError as e:
 import numpy as np
 import os
 import json
-from sentence_transformers import SentenceTransformer
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from openai import AzureOpenAI
 
 '''
 Please provide the following environment variables in your .env file if you want to enable Azure Search:
@@ -82,8 +83,19 @@ class MagenticOneRAGAgent(AssistantAgent):
                 )
         # self.AZURE_SEARCH_ADMIN_KEY = AZURE_SEARCH_ADMIN_KEY
 
-        # Align embeddings with the Azure Search index
-        self.embedding_model = SentenceTransformer("text-embedding-3-small")
+        # Client used to generate embeddings that align with Azure Search
+        credential = DefaultAzureCredential()
+        token_provider = get_bearer_token_provider(
+            credential, "https://cognitiveservices.azure.com/.default"
+        )
+        self._embedding_client = AzureOpenAI(
+            api_version="2024-12-01-preview",
+            azure_ad_token_provider=token_provider,
+            timeout=int(os.getenv("OPENAI_TIMEOUT", 60)),
+        )
+        self.embedding_model = os.getenv(
+            "AZURE_OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
+        )
         self.faiss_index = None
         self.faiss_documents = []
         self.faiss_index_path = faiss_index_path or f"{self.index_name}.faiss"
@@ -127,9 +139,12 @@ class MagenticOneRAGAgent(AssistantAgent):
 
     def build_faiss_index(self, documents: list[str]):
         self.faiss_documents = documents
-        embeddings = self.embedding_model.encode(documents)
+        response = self._embedding_client.embeddings.create(
+            input=documents, model=self.embedding_model
+        )
+        embeddings = np.array([d.embedding for d in response.data])
         self.faiss_index = faiss.IndexFlatL2(embeddings.shape[1])
-        self.faiss_index.add(np.array(embeddings))
+        self.faiss_index.add(embeddings)
         self.save_faiss_index(self.faiss_index_path)
 
     def save_faiss_index(self, path: str):
@@ -173,8 +188,11 @@ class MagenticOneRAGAgent(AssistantAgent):
         # ---------- FAISS Search ----------
         try:
             if self.faiss_index is not None:
-                query_embedding = self.embedding_model.encode([query])
-                D, I = self.faiss_index.search(np.array(query_embedding), k=1)
+                resp = self._embedding_client.embeddings.create(
+                    input=[query], model=self.embedding_model
+                )
+                query_embedding = np.array([resp.data[0].embedding])
+                D, I = self.faiss_index.search(query_embedding, k=1)
                 idx = int(I[0][0])
                 score = float(D[0][0])
                 snippet = self.faiss_documents[idx]
