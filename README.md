@@ -96,6 +96,8 @@ uvicorn main:app --reload
 
 To see detailed agent logs during development, set `DEBUG_AGENT_LOGS=true` in
 your `.env` file before starting the backend.
+Use `RAG_BACKEND=azure` to leverage Azure Cognitive Search or `RAG_BACKEND=faiss`
+for a local FAISS index.
 
 ### run the frontend
 cd frontend

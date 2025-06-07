@@ -12,6 +12,8 @@ import json
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
 
+RAG_BACKEND = os.getenv("RAG_BACKEND", "azure").lower()
+
 '''
 Please provide the following environment variables in your .env file if you want to enable Azure Search:
 AZURE_SEARCH_SERVICE_ENDPOINT=""
@@ -39,7 +41,7 @@ class MagenticOneRAGAgent(AssistantAgent):
         model_client: ChatCompletionClient,
         index_name: str,
         AZURE_SEARCH_SERVICE_ENDPOINT: str,
-        use_azure_search: bool = False,
+        use_azure_search: bool | None = None,
         faiss_documents: list[str] | None = None,
         faiss_index_path: str | None = None,
         # AZURE_SEARCH_ADMIN_KEY: str = None,
@@ -53,7 +55,9 @@ class MagenticOneRAGAgent(AssistantAgent):
             model_client: The chat completion client.
             index_name: The name of the Azure Search index.
             AZURE_SEARCH_SERVICE_ENDPOINT: The Azure Search service endpoint.
-            use_azure_search: Whether to enable Azure Search (default True).
+            use_azure_search: Whether to enable Azure Search. If ``None``,
+                this is determined by the ``RAG_BACKEND`` environment variable
+                ("azure" enables search, anything else disables it).
             faiss_documents: Optional list of documents to build the FAISS index for vector search.
             faiss_index_path: Optional path to store/load the FAISS index file.
             description: The agent description.
@@ -70,7 +74,10 @@ class MagenticOneRAGAgent(AssistantAgent):
         )
 
         self.index_name = index_name
-        self.use_azure_search = use_azure_search
+        if use_azure_search is None:
+            self.use_azure_search = RAG_BACKEND == "azure"
+        else:
+            self.use_azure_search = use_azure_search
         if self.use_azure_search:
             self.AZURE_SEARCH_SERVICE_ENDPOINT = (
                 AZURE_SEARCH_SERVICE_ENDPOINT
