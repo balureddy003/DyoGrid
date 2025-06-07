@@ -3,6 +3,9 @@ import logging
 import os
 import time
 import random
+from uuid import uuid4
+
+from inspect import signature
 
 from typing import Optional, AsyncGenerator, Dict, Any, List
 from autogen_agentchat.ui import Console
@@ -38,10 +41,115 @@ token_provider = get_bearer_token_provider(
 
 def _wrap_with_proxy(agent):
     """
-    Ensure every agent carries an explicit AgentId so that
-    message.source shows the correct (non‑'unknown') name.
+    Attach a unique AgentId (id/name + key) to every agent so that
+    message.source is never 'unknown'.
+
+    The signatures of *both* AgentId and AgentProxy vary across
+    autogen‑core releases.  We therefore:
+
+    1.  Build an AgentId using the first signature that works.
+    2.  Inspect AgentProxy.__init__ and create the proxy with
+        the appropriate argument names/positions.
+
+    If the object is already an AgentProxy we simply return it.
     """
-    return AgentProxy(agent_id=AgentId(agent.name), agent=agent)
+    if isinstance(agent, AgentProxy):
+        return agent  # already wrapped
+
+    new_key = str(uuid4())
+
+    # ---- Step 1: build a compatible AgentId ---------------------------------
+    agent_id = None
+    for kwargs in (
+        {"name": agent.name, "key": new_key},
+        {"id": agent.name, "key": new_key},
+        {},  # fallback to positional signature tried below
+    ):
+        try:
+            agent_id = AgentId(**kwargs) if kwargs else AgentId(agent.name, new_key)
+            break
+        except TypeError:
+            continue
+
+    if agent_id is None:
+        raise RuntimeError("Unable to construct AgentId with the current autogen‑core version.")
+
+    # ---- Step 2: wrap with AgentProxy ---------------------------------------
+    sig = signature(AgentProxy)  # reflect current signature
+    param_names = list(sig.parameters)
+
+    try:
+        if {"agent_id", "agent"}.issubset(param_names):
+            proxy = AgentProxy(agent_id=agent_id, agent=agent)
+            proxy.name = getattr(agent, "name", str(agent_id))
+            # Expose the underlying agent's produced_message_types so GroupChat can inspect it
+            if not hasattr(proxy, "produced_message_types"):
+                proxy.produced_message_types = getattr(agent, "produced_message_types", [])
+            # --- propagate commonly‑used attributes so GroupChat can inspect them ---
+            for _attr in ("name", "description", "produced_message_types"):
+                if hasattr(agent, _attr) and not hasattr(proxy, _attr):
+                    try:
+                        setattr(proxy, _attr, getattr(agent, _attr))
+                    except Exception:
+                        # silently skip if the proxy implementation forbids setting
+                        pass
+            # --- forward lifecycle / stream handlers the team code expects ---
+            for _method in ("on_reset", "on_messages_stream", "on_message"):
+                if hasattr(agent, _method) and not hasattr(proxy, _method):
+                    try:
+                        setattr(proxy, _method, getattr(agent, _method))
+                    except Exception:
+                        pass
+            return proxy
+        elif {"id", "agent"}.issubset(param_names):
+            proxy = AgentProxy(id=agent_id, agent=agent)
+            proxy.name = getattr(agent, "name", str(agent_id))
+            # Expose the underlying agent's produced_message_types so GroupChat can inspect it
+            if not hasattr(proxy, "produced_message_types"):
+                proxy.produced_message_types = getattr(agent, "produced_message_types", [])
+            # --- propagate commonly‑used attributes so GroupChat can inspect them ---
+            for _attr in ("name", "description", "produced_message_types"):
+                if hasattr(agent, _attr) and not hasattr(proxy, _attr):
+                    try:
+                        setattr(proxy, _attr, getattr(agent, _attr))
+                    except Exception:
+                        # silently skip if the proxy implementation forbids setting
+                        pass
+            # --- forward lifecycle / stream handlers the team code expects ---
+            for _method in ("on_reset", "on_messages_stream", "on_message"):
+                if hasattr(agent, _method) and not hasattr(proxy, _method):
+                    try:
+                        setattr(proxy, _method, getattr(agent, _method))
+                    except Exception:
+                        pass
+            return proxy
+        elif len(param_names) >= 2:
+            # assume first two positional parameters are (agent_id/id, agent)
+            proxy = AgentProxy(agent_id, agent)
+            proxy.name = getattr(agent, "name", str(agent_id))
+            # Expose the underlying agent's produced_message_types so GroupChat can inspect it
+            if not hasattr(proxy, "produced_message_types"):
+                proxy.produced_message_types = getattr(agent, "produced_message_types", [])
+            # --- propagate commonly‑used attributes so GroupChat can inspect them ---
+            for _attr in ("name", "description", "produced_message_types"):
+                if hasattr(agent, _attr) and not hasattr(proxy, _attr):
+                    try:
+                        setattr(proxy, _attr, getattr(agent, _attr))
+                    except Exception:
+                        # silently skip if the proxy implementation forbids setting
+                        pass
+            # --- forward lifecycle / stream handlers the team code expects ---
+            for _method in ("on_reset", "on_messages_stream", "on_message"):
+                if hasattr(agent, _method) and not hasattr(proxy, _method):
+                    try:
+                        setattr(proxy, _method, getattr(agent, _method))
+                    except Exception:
+                        pass
+            return proxy
+    except TypeError:
+        pass
+
+    raise RuntimeError("Unable to construct AgentProxy with the current autogen‑core version.")
 
 def generate_session_name():
     '''Generate a unique session name based on random sci-fi words, e.g. quantum-cyborg-1234'''
@@ -243,8 +351,10 @@ class MagenticOneHelper:
                     index_name=agent["index_name"],
                     description=agent["description"],
                     AZURE_SEARCH_SERVICE_ENDPOINT=os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT"),
+                    use_azure_search=False, 
                     # AZURE_SEARCH_ADMIN_KEY=os.getenv("AZURE_SEARCH_ADMIN_KEY")
                     )
+                rag_agent.load_faiss_data(docs)
                 agent_list.append(_wrap_with_proxy(rag_agent))
                 print(f'{agent["name"]} (RAG) added!')
             else:

@@ -8,4 +8,4 @@ dream/
 .cache/
 logs/
 tmp/
-
+data/conversations
