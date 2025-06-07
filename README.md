@@ -102,4 +102,3 @@ pip install litellm
 pip install 'litellm[proxy]'
  litellm --config litellm.config.yaml
 
- ### install mcpserver
