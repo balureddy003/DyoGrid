@@ -58,22 +58,6 @@ const data = {
       items: [{ title: "Library", url: "/agents" }],
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      isActive: true,
-      items: [
-        {
-          title: "Introduction",
-          url: "/introduction",
-        },
-        {
-          title: "Get Started",
-          url: "/get-started",
-        },
-      ],
-    },
-    {
       title: "Settings",
       url: "#",
       icon: Settings2,
