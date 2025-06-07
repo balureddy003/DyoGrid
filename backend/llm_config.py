@@ -1,4 +1,10 @@
+
 import os
+
+# LiteLLM/Ollama default models
+LITELLM_CHAT_MODEL = os.getenv("LITELLM_CHAT_MODEL", os.getenv("OLLAMA_MODEL", "llama3.1"))
+LITELLM_TOOL_MODEL = os.getenv("LITELLM_TOOL_MODEL", LITELLM_CHAT_MODEL)
+LITELLM_EMBED_MODEL = os.getenv("LITELLM_EMBED_MODEL", "nomic-embed-text")
 
 
 def _load_agent_model_map() -> dict:
@@ -36,19 +42,24 @@ def get_llm_config(agent_name: str | None = None, agent_type: str | None = None)
             "timeout": timeout,
         }
     elif provider == "ollama":
+        # Decide chat vs tool model
+        default_chat = LITELLM_CHAT_MODEL
+        default_tool = LITELLM_TOOL_MODEL
+        chosen = model or default_chat
+        is_tool = chosen == default_tool
         return {
             "provider": "openai",
-            "model": model or os.getenv("OLLAMA_MODEL", "llama3.1"),
+            "model": chosen,
             "base_url": os.getenv("LITELLM_BASE_URL", "http://localhost:4000/v1"),
             "api_key": os.getenv("LITELLM_API_KEY", "sk-no-key-needed"),
-            "function_calling": "auto",
-            "json_output": True,
+            "function_calling": is_tool,
+            "json_output": is_tool,
             "stream": True,
             # Required when using a non-OpenAI model via LiteLLM/Ollama
             "model_info": {
                 "family": "ollama",
-                "function_calling": True,
-                "json_output": True,
+                "function_calling": is_tool,
+                "json_output": is_tool,
                 "vision": False,
             },
             "timeout": timeout,

@@ -1,25 +1,34 @@
 model_list:
-  - model_name: ollama/llama3.1  # This is just an alias
+  - model_name: ollama/llama3.1
     litellm_params:
-      model: ollama/llama3.1            # Match exactly what `ollama list` shows
+      provider: ollama
+      api_type: ollama
+      model: ollama/llama3.1
       api_base: http://localhost:11434
       api_key: sk-no-key-needed
-      api_type: ollama
-      llm_provider: ollama
-      function_calling: true
-      json_output: true
-      structured_output: true
-  - model_name: ollama/deepseek-coder:6.7b
-    litellm_params:
-      model: ollama/deepseek-coder:6.7b
-      api_base: http://localhost:11434
-      api_key: sk-no-key-needed
-      api_type: ollama
-      llm_provider: ollama
       function_calling: true
       json_output: true
       structured_output: true
 
+  - model_name: ollama/deepseek-coder:6.7b
+    litellm_params:
+      provider: ollama
+      api_type: ollama
+      model: ollama/deepseek-coder:6.7b
+      api_base: http://localhost:11434
+      api_key: sk-no-key-needed
+      function_calling: true
+      json_output: true
+      structured_output: true
+
+  - model_name: ollama/nomic-embed-text
+    litellm_params:
+      provider: ollama
+      api_type: ollama
+      model: ollama/nomic-embed-text
+      api_base: http://localhost:11434
+      api_key: sk-no-key-needed
+      timeout: 600
+
 litellm_settings:
-  drop_params: true
-  set_verbose: true
+  drop_params: false
