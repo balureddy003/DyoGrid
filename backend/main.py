@@ -9,6 +9,7 @@ import schemas, crud
 from database import CosmosDB
 import os
 import uuid
+from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi.responses import StreamingResponse, Response
 import json, asyncio
@@ -26,6 +27,10 @@ from typing import List
 import time
 logging.getLogger("pymongo.command").setLevel(logging.WARNING)
 print("Starting the server...")
+load_dotenv()
+DEBUG_AGENT_LOGS = os.getenv("DEBUG_AGENT_LOGS", "false").lower() == "true"
+# Configure root logging level based on DEBUG_AGENT_LOGS
+# We'll adjust in lifespan.
 #print(f'AZURE_OPENAI_ENDPOINT:{os.getenv("AZURE_OPENAI_ENDPOINT")}')
 #print(f'COSMOS_DB_URI:{os.getenv("COSMOS_DB_URI")}')
 #print(f'AZURE_SEARCH_SERVICE_ENDPOINT:{os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT")}')
@@ -72,8 +77,11 @@ async def lifespan(app: FastAPI):
     # Startup code: initialize database and configure logging
     # app.state.db = None
     app.state.db = CosmosDB()
-    logging.basicConfig(level=logging.WARNING,
+    log_level = logging.DEBUG if DEBUG_AGENT_LOGS else logging.WARNING
+    logging.basicConfig(level=log_level,
                         format='%(levelname)s: %(asctime)s - %(message)s')
+    if DEBUG_AGENT_LOGS:
+        logging.debug("DEBUG_AGENT_LOGS enabled")
     print("Database initialized.")
     yield
     # Shutdown code (optional)
