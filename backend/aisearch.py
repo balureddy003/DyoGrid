@@ -46,7 +46,8 @@ from typing import List
 from fastapi import UploadFile
 # from rich.logging import RichHandler
 
-EMBEDDINGS_DIMENSIONS = 3072
+# Use the same embedding dimensionality as the RAG agent
+EMBEDDINGS_DIMENSIONS = 1536
 
 def load_azd_env():
     # """Get path to current azd env file and load file using python-dotenv"""
