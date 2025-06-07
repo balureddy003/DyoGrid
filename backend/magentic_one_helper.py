@@ -272,6 +272,24 @@ class MagenticOneHelper:
 
     async def setup_agents(self, agents, client, logs_dir):
         agent_list = []
+        docs_dir = os.environ.get(
+            "RAG_DOCS_PATH",
+            os.path.join(os.path.dirname(__file__), "data", "ai-search-index"),
+        )
+        docs: List[str] = []
+        if os.path.isdir(docs_dir):
+            for root, _, files in os.walk(docs_dir):
+                for fname in files:
+                    file_path = os.path.join(root, fname)
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            docs.append(f.read())
+                    except Exception:
+                        try:
+                            with open(file_path, "rb") as f:
+                                docs.append(f.read().decode("utf-8", errors="ignore"))
+                        except Exception:
+                            pass
         for agent in agents:
             # This is default MagenticOne agent - Coder
             if (agent["type"] == "MagenticOne" and agent["name"] == "Coder"):
