@@ -2,21 +2,19 @@ from autogen_agentchat.agents import AssistantAgent
 from autogen_core.models import (
     ChatCompletionClient,
 )
-from azure.search.documents import SearchClient
-from azure.core.credentials import AzureKeyCredential
-from azure.search.documents.models import VectorizableTextQuery
-from azure.identity import DefaultAzureCredential
 try:
     import faiss
 except ImportError as e:
     raise ImportError("faiss is not installed. Install it via 'pip install faiss-cpu' or 'faiss-gpu' based on your system.") from e
 import numpy as np
+import os
 from sentence_transformers import SentenceTransformer
 
 '''
-Please provide the following environment variables in your .env file:
+Please provide the following environment variables in your .env file if you want to enable Azure Search:
 AZURE_SEARCH_SERVICE_ENDPOINT=""
 AZURE_SEARCH_ADMIN_KEY=""
+Local FAISS vector search is supported by default.
 '''
 MAGENTIC_ONE_RAG_DESCRIPTION = "An agent that has access to internal index and can handle RAG tasks, call this agent if you are getting questions on your internal index"
 
@@ -37,10 +35,25 @@ class MagenticOneRAGAgent(AssistantAgent):
         model_client: ChatCompletionClient,
         index_name: str,
         AZURE_SEARCH_SERVICE_ENDPOINT: str,
+        use_azure_search: bool = False,
+        faiss_documents: list[str] | None = None,
         # AZURE_SEARCH_ADMIN_KEY: str = None,
         description: str = MAGENTIC_ONE_RAG_DESCRIPTION,
 
     ):
+        """Initialize the MagenticOneRAGAgent.
+
+        Args:
+            name: The agent's name.
+            model_client: The chat completion client.
+            index_name: The name of the Azure Search index.
+            AZURE_SEARCH_SERVICE_ENDPOINT: The Azure Search service endpoint.
+            use_azure_search: Whether to enable Azure Search (default True).
+            faiss_documents: Optional list of documents to build the FAISS index for vector search.
+            description: The agent description.
+
+        When faiss_documents are provided, a FAISS index will be automatically built and used for vector similarity search.
+        """
         super().__init__(
             name,
             model_client,
@@ -50,22 +63,53 @@ class MagenticOneRAGAgent(AssistantAgent):
             reflect_on_tool_use=True,
         )
 
-        self.index_name = index_name    
-        self.AZURE_SEARCH_SERVICE_ENDPOINT = AZURE_SEARCH_SERVICE_ENDPOINT
+        self.index_name = index_name
+        self.use_azure_search = use_azure_search
+        if self.use_azure_search:
+            self.AZURE_SEARCH_SERVICE_ENDPOINT = (
+                AZURE_SEARCH_SERVICE_ENDPOINT
+                or os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT")
+            )
+            if not self.AZURE_SEARCH_SERVICE_ENDPOINT:
+                raise ValueError(
+                    "AZURE_SEARCH_SERVICE_ENDPOINT is missing; set it in .env or "
+                    "pass it explicitly to MagenticOneRAGAgent."
+                )
         # self.AZURE_SEARCH_ADMIN_KEY = AZURE_SEARCH_ADMIN_KEY
 
         self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
         self.faiss_index = None
         self.faiss_documents = []
+        # Automatically build FAISS index if documents provided
+        if faiss_documents:
+            self.build_faiss_index(faiss_documents)
 
-        
-    def config_search(self) -> SearchClient:
-        service_endpoint = self.AZURE_SEARCH_SERVICE_ENDPOINT
-        # key = self.AZURE_SEARCH_ADMIN_KEY
+        self._search_client = None
+        if self.use_azure_search:
+            self._search_client = self._config_search()
+
+    def _config_search(self) -> "SearchClient":
+        if not self.use_azure_search:
+            raise RuntimeError("Azure search is disabled for this agent.")
+        from azure.search.documents import SearchClient
+        from azure.core.credentials import AzureKeyCredential
+        from azure.identity import DefaultAzureCredential
+
+        endpoint = self.AZURE_SEARCH_SERVICE_ENDPOINT
         index_name = self.index_name
-        # credential = AzureKeyCredential(key)
-        credential = DefaultAzureCredential()
-        return SearchClient(endpoint=service_endpoint, index_name=index_name, credential=credential)
+
+        if endpoint.startswith("https://"):
+            credential = DefaultAzureCredential()
+        else:
+            key = os.getenv("AZURE_SEARCH_ADMIN_KEY")
+            if not key:
+                raise RuntimeError(
+                    "AZURE_SEARCH_ADMIN_KEY is required when using an HTTP "
+                    "endpoint (or switch to HTTPS)."
+                )
+            credential = AzureKeyCredential(key)
+
+        return SearchClient(endpoint=endpoint, index_name=index_name, credential=credential)
 
     def build_faiss_index(self, documents: list[str]):
         self.faiss_documents = documents
@@ -77,24 +121,8 @@ class MagenticOneRAGAgent(AssistantAgent):
         self.build_faiss_index(docs)
 
     async def do_search(self, query: str) -> str:
-        # Azure Search
-        try:
-            aia_search_client = self.config_search()
-            fields = "text_vector"
-            vector_query = VectorizableTextQuery(text=query, k_nearest_neighbors=1, fields=fields, exhaustive=True)
-            results = aia_search_client.search(
-                search_text=None,
-                vector_queries=[vector_query],
-                select=["parent_id", "chunk_id", "chunk"],
-                top=1
-            )
-            azure_answer = ""
-            for result in results:
-                azure_answer += result["chunk"]
-        except Exception as e:
-            azure_answer = f"Azure Search failed with error: {str(e)}"
-
-        # FAISS Search
+        # ---------- FAISS Search ----------
+        faiss_answer = ""
         try:
             if self.faiss_index is not None:
                 query_embedding = self.embedding_model.encode([query])
@@ -105,4 +133,26 @@ class MagenticOneRAGAgent(AssistantAgent):
         except Exception as e:
             faiss_answer = f"FAISS search failed with error: {str(e)}"
 
-        return f"Azure Search Result:\n{azure_answer}\n\nFAISS Search Result:\n{faiss_answer}"
+        # ---------- Azure Cognitive Search ----------
+        azure_answer = "Azure search disabled."
+        if self.use_azure_search and self._search_client is not None:
+            try:
+                from azure.search.documents.models import VectorizableTextQuery
+                fields = "text_vector"
+                vector_query = VectorizableTextQuery(
+                    text=query,
+                    k_nearest_neighbors=1,
+                    fields=fields,
+                    exhaustive=True,
+                )
+                results = self._search_client.search(
+                    search_text=None,
+                    vector_queries=[vector_query],
+                    select=["parent_id", "chunk_id", "chunk"],
+                    top=1,
+                )
+                azure_answer = "".join(r["chunk"] for r in results)
+            except Exception as e:
+                azure_answer = f"Azure Search failed with error: {str(e)}"
+
+        return f"FAISS Search Result:\n{faiss_answer}\n\nAzure Search Result:\n{azure_answer}"
