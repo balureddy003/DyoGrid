@@ -3,7 +3,9 @@ import os, json, uuid
 from datetime import datetime
 from typing import List
 
-DATA_DIR = "./data/conversations"
+# Store conversation data relative to this file so the service works
+# regardless of the working directory used to launch it.
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data", "conversations")
 
 def ensure_data_dir():
     if not os.path.exists(DATA_DIR):
