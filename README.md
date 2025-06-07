@@ -112,6 +112,12 @@ pip install litellm
 pip install 'litellm[proxy]'
  litellm --config litellm.config.yaml
 
+Set the `AGENT_MODEL_MAP` environment variable to map agent names to specific models, e.g.
+
+```bash
+export AGENT_MODEL_MAP="Coder:ollama/deepseek-coder:6.7b,WebSurfer:ollama/llama3.1"
+```
+
 
 ## 🤝 Contributing
 

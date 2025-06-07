@@ -9,6 +9,16 @@ model_list:
       function_calling: true
       json_output: true
       structured_output: true
+  - model_name: ollama/deepseek-coder:6.7b
+    litellm_params:
+      model: ollama/deepseek-coder:6.7b
+      api_base: http://localhost:11434
+      api_key: sk-no-key-needed
+      api_type: ollama
+      llm_provider: ollama
+      function_calling: true
+      json_output: true
+      structured_output: true
 
 litellm_settings:
   drop_params: true

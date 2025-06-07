@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import get_llm_config after dotenv load
-from llm_config import get_llm_config
+from llm_config import get_llm_config, build_chat_client
 
 from magentic_one_custom_agent import MagenticOneCustomAgent
 from magentic_one_custom_rag_agent import MagenticOneRAGAgent
@@ -271,11 +271,11 @@ class MagenticOneHelper:
             raise RuntimeError(f"Unsupported LLM provider: {provider}")
 
         # Set up agents
-        self.agents = await self.setup_agents(agents, self.client, self.logs_dir)
+        self.agents = await self.setup_agents(agents, self.logs_dir)
 
         print("Agents setup complete!")
 
-    async def setup_agents(self, agents, client, logs_dir):
+    async def setup_agents(self, agents, logs_dir):
         agent_list = []
         docs_dir = os.environ.get(
             "RAG_DOCS_PATH",
@@ -298,7 +298,8 @@ class MagenticOneHelper:
         for agent in agents:
             # This is default MagenticOne agent - Coder
             if (agent["type"] == "MagenticOne" and agent["name"] == "Coder"):
-                coder = MagenticOneCoderAgent("Coder", model_client=client)
+                coder_client = build_chat_client(agent_name="Coder", agent_type="MagenticOne")
+                coder = MagenticOneCoderAgent("Coder", model_client=coder_client)
                 agent_list.append(_wrap_with_proxy(coder))
                 print("Coder added!")
 
@@ -306,10 +307,9 @@ class MagenticOneHelper:
             elif (agent["type"] == "MagenticOne" and agent["name"] == "Executor"):
                 # handle local = local docker execution
                 if self.run_locally:
-                    #docker
+                    # docker
                     code_executor = DockerCommandLineCodeExecutor(work_dir=logs_dir)
                     await code_executor.start()
-                    executor = CodeExecutorAgent("Executor", code_executor=code_executor)
                 
                 # or remote = Azure ACA Dynamic Sessions execution
                 else:
@@ -324,40 +324,44 @@ class MagenticOneHelper:
                         print(code_executor._session_id)
                         #code_executor.upload_files(os.path.join(os.getcwd(), "data"))
                         print("Files uploaded!")
-                        executor = CodeExecutorAgent("Executor",code_executor=code_executor )
-                
-                agent_list.append(_wrap_with_proxy(executor))
+                executor_client = build_chat_client(agent_name="Executor", agent_type="MagenticOne")
+                executor_agent = CodeExecutorAgent("Executor", code_executor=code_executor, model_client=executor_client)
+                agent_list.append(_wrap_with_proxy(executor_agent))
                 print("Executor added!")
 
             # This is default MagenticOne agent - WebSurfer
             elif (agent["type"] == "MagenticOne" and agent["name"] == "WebSurfer"):
-                web_surfer = MultimodalWebSurfer("WebSurfer", model_client=client)
+                web_client = build_chat_client(agent_name="WebSurfer", agent_type="MagenticOne")
+                web_surfer = MultimodalWebSurfer("WebSurfer", model_client=web_client)
                 agent_list.append(_wrap_with_proxy(web_surfer))
                 print("WebSurfer added!")
             
             # This is default MagenticOne agent - FileSurfer
             elif (agent["type"] == "MagenticOne" and agent["name"] == "FileSurfer"):
-                file_surfer = FileSurfer("FileSurfer", model_client=client)
+                file_client = build_chat_client(agent_name="FileSurfer", agent_type="MagenticOne")
+                file_surfer = FileSurfer("FileSurfer", model_client=file_client)
                 file_surfer._browser.set_path(os.path.join(os.getcwd(), "data"))  # Set the path to the data folder in the current working directory
                 agent_list.append(_wrap_with_proxy(file_surfer))
                 print("FileSurfer added!")
             
             # This is custom agent - simple SYSTEM message and DESCRIPTION is used inherited from AssistantAgent
             elif (agent["type"] == "Custom"):
+                custom_client = build_chat_client(agent_name=agent["name"], agent_type="Custom")
                 custom_agent = MagenticOneCustomAgent(
-                    agent["name"], 
-                    model_client=client, 
-                    system_message=agent["system_message"], 
+                    agent["name"],
+                    model_client=custom_client,
+                    system_message=agent["system_message"],
                     description=agent["description"]
                     )
                 agent_list.append(_wrap_with_proxy(custom_agent))
                 print(f'{agent["name"]} (custom) added!')
-            
+
             elif (agent["type"] == "CustomMCP"):
+                custom_client = build_chat_client(agent_name=agent["name"], agent_type="CustomMCP")
                 custom_agent = await MagenticOneCustomMCPAgent.create(
-                    agent["name"], 
-                    client, 
-                    agent["system_message"] + "\n\n in case of email use this address as TO: " + self.user_id, 
+                    agent["name"],
+                    custom_client,
+                    agent["system_message"] + "\n\n in case of email use this address as TO: " + self.user_id,
                     agent["description"],
                     self.user_id
                 )
@@ -367,10 +371,11 @@ class MagenticOneHelper:
             
             # This is custom agent - RAG agent - you need to specify index_name and Azure Cognitive Search service endpoint and admin key in .env file
             elif (agent["type"] == "RAG"):
+                rag_client = build_chat_client(agent_name=agent["name"], agent_type="RAG")
                 # RAG agent
                 rag_agent = MagenticOneRAGAgent(
                     agent["name"],
-                    model_client=client,
+                    model_client=rag_client,
                     index_name=agent["index_name"],
                     description=agent["description"],
                     AZURE_SEARCH_SERVICE_ENDPOINT=os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT"),
