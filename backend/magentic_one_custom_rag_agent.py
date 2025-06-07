@@ -8,6 +8,7 @@ except ImportError as e:
     raise ImportError("faiss is not installed. Install it via 'pip install faiss-cpu' or 'faiss-gpu' based on your system.") from e
 import numpy as np
 import os
+import json
 from sentence_transformers import SentenceTransformer
 
 '''
@@ -37,6 +38,7 @@ class MagenticOneRAGAgent(AssistantAgent):
         AZURE_SEARCH_SERVICE_ENDPOINT: str,
         use_azure_search: bool = False,
         faiss_documents: list[str] | None = None,
+        faiss_index_path: str | None = None,
         # AZURE_SEARCH_ADMIN_KEY: str = None,
         description: str = MAGENTIC_ONE_RAG_DESCRIPTION,
 
@@ -50,6 +52,7 @@ class MagenticOneRAGAgent(AssistantAgent):
             AZURE_SEARCH_SERVICE_ENDPOINT: The Azure Search service endpoint.
             use_azure_search: Whether to enable Azure Search (default True).
             faiss_documents: Optional list of documents to build the FAISS index for vector search.
+            faiss_index_path: Optional path to store/load the FAISS index file.
             description: The agent description.
 
         When faiss_documents are provided, a FAISS index will be automatically built and used for vector similarity search.
@@ -80,8 +83,16 @@ class MagenticOneRAGAgent(AssistantAgent):
         self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
         self.faiss_index = None
         self.faiss_documents = []
-        # Automatically build FAISS index if documents provided
-        if faiss_documents:
+        self.faiss_index_path = faiss_index_path or f"{self.index_name}.faiss"
+
+        if os.path.exists(self.faiss_index_path):
+            try:
+                self.load_faiss_index(self.faiss_index_path)
+            except Exception as e:
+                print(f"Failed to load FAISS index: {e}")
+                if faiss_documents:
+                    self.build_faiss_index(faiss_documents)
+        elif faiss_documents:
             self.build_faiss_index(faiss_documents)
 
         self._search_client = None
@@ -116,6 +127,27 @@ class MagenticOneRAGAgent(AssistantAgent):
         embeddings = self.embedding_model.encode(documents)
         self.faiss_index = faiss.IndexFlatL2(embeddings.shape[1])
         self.faiss_index.add(np.array(embeddings))
+        self.save_faiss_index(self.faiss_index_path)
+
+    def save_faiss_index(self, path: str):
+        """Save the FAISS index and associated documents to disk."""
+        if self.faiss_index is None:
+            raise ValueError("FAISS index is not built yet.")
+        faiss.write_index(self.faiss_index, path)
+        with open(f"{path}.docs", "w", encoding="utf-8") as f:
+            json.dump(self.faiss_documents, f)
+
+    def load_faiss_index(self, path: str):
+        """Load the FAISS index and documents from disk."""
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"FAISS index file not found at {path}")
+        self.faiss_index = faiss.read_index(path)
+        docs_path = f"{path}.docs"
+        if os.path.exists(docs_path):
+            with open(docs_path, "r", encoding="utf-8") as f:
+                self.faiss_documents = json.load(f)
+        else:
+            self.faiss_documents = []
 
     def load_faiss_data(self, docs: list[str]):
         self.build_faiss_index(docs)
