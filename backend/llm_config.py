@@ -44,6 +44,13 @@ def get_llm_config(agent_name: str | None = None, agent_type: str | None = None)
             "function_calling": "auto",
             "json_output": True,
             "stream": True,
+            # Required when using a non-OpenAI model via LiteLLM/Ollama
+            "model_info": {
+                "family": "ollama",
+                "function_calling": True,
+                "json_output": True,
+                "vision": False,
+            },
             "timeout": timeout,
         }
     else:
