@@ -234,6 +234,7 @@ class MagenticOneHelper:
                 "azure_endpoint": self.llm_config["base_url"],
                 "azure_ad_token_provider": token_provider,
                 "api_key": self.llm_config["api_key"],
+                "timeout": self.llm_config.get("timeout", 60),
             }
             self.client = AzureOpenAIChatCompletionClient(**azure_args)
             # Reasoning client can override model/deployment if needed; here we reuse same
@@ -249,7 +250,8 @@ class MagenticOneHelper:
                 model_info=self.llm_config.get(
                     "model_info",
                     {"vision": False, "function_calling": True, "json_output": True, "family": "ollama"}
-                )
+                ),
+                timeout=self.llm_config.get("timeout", 60),
             )
             self.client_reasoning = OpenAIChatCompletionClient(
                 model=self.llm_config["model"],
@@ -260,7 +262,8 @@ class MagenticOneHelper:
                 model_info=self.llm_config.get(
                     "model_info",
                     {"vision": False, "function_calling": True, "json_output": True, "family": "ollama"}
-                )
+                ),
+                timeout=self.llm_config.get("timeout", 60),
             )
         else:
             raise RuntimeError(f"Unsupported LLM provider: {provider}")

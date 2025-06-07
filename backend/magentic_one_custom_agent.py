@@ -14,13 +14,14 @@ def _build_llm_client():
     Supports 'azure' and 'openai' (incl. LiteLLM/Ollama proxy) providers.
     """
     cfg = get_llm_config().copy()
+    timeout = cfg.pop("timeout", 60)
     provider = cfg.pop("provider", "openai").lower()
 
     if provider == "azure":
-        return AzureOpenAIChatCompletionClient(**cfg)
+        return AzureOpenAIChatCompletionClient(timeout=timeout, **cfg)
     else:
         # treat every non‑azure provider as OpenAI compatible
-        return OpenAIChatCompletionClient(**cfg)
+        return OpenAIChatCompletionClient(timeout=timeout, **cfg)
 
 class MagenticOneCustomAgent(AssistantAgent):
     """Custom agent without function calling support."""

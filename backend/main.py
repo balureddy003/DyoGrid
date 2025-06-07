@@ -129,7 +129,8 @@ async def get_openai_client():
         api_version="2024-12-01-preview",
         # azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         # azure_endpoint="https://aoai-eastus-mma-cdn.openai.azure.com/",
-        azure_ad_token_provider=token_provider
+        azure_ad_token_provider=token_provider,
+        timeout=int(os.getenv("OPENAI_TIMEOUT", 60))
     )
 
 
