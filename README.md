@@ -112,10 +112,14 @@ pip install litellm
 pip install 'litellm[proxy]'
  litellm --config litellm.config.yaml
 
-Set the `AGENT_MODEL_MAP` environment variable to map agent names to specific models, e.g.
+Set the `AGENT_MODEL_MAP` environment variable to map agent names to specific models.  
+Agent names are matched case-insensitively.
+You can always enable function-calling support for custom models by setting `LITELLM_ALWAYS_ENABLE_TOOLS=true`.
+Example:
 
 ```bash
 export AGENT_MODEL_MAP="Coder:ollama/deepseek-coder:6.7b,WebSurfer:ollama/llama3.1"
+export LITELLM_ALWAYS_ENABLE_TOOLS=true
 ```
 
 
