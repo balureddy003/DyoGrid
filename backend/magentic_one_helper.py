@@ -39,6 +39,8 @@ token_provider = get_bearer_token_provider(
     azure_credential, "https://cognitiveservices.azure.com/.default"
 )
 
+RAG_BACKEND = os.getenv("RAG_BACKEND", "azure").lower()
+
 def _wrap_with_proxy(agent):
     """
     Attach a unique AgentId (id/name + key) to every agent so that
@@ -367,15 +369,16 @@ class MagenticOneHelper:
             elif (agent["type"] == "RAG"):
                 # RAG agent
                 rag_agent = MagenticOneRAGAgent(
-                    agent["name"], 
-                    model_client=client, 
+                    agent["name"],
+                    model_client=client,
                     index_name=agent["index_name"],
                     description=agent["description"],
                     AZURE_SEARCH_SERVICE_ENDPOINT=os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT"),
-                    use_azure_search=False, 
+                    use_azure_search=False,
                     # AZURE_SEARCH_ADMIN_KEY=os.getenv("AZURE_SEARCH_ADMIN_KEY")
                     )
-                rag_agent.load_faiss_data(docs)
+                if RAG_BACKEND == "faiss":
+                    rag_agent.load_faiss_data(docs)
                 agent_list.append(_wrap_with_proxy(rag_agent))
                 print(f'{agent["name"]} (RAG) added!')
             else:

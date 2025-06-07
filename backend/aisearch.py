@@ -44,6 +44,9 @@ from azure.search.documents.indexes.models import (
 )
 from azure.storage.blob import BlobServiceClient as SyncBlobServiceClient
 from azure.storage.blob.aio import BlobServiceClient as AsyncBlobServiceClient
+import numpy as np
+import faiss
+from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 from typing import List
 from fastapi import UploadFile
@@ -51,6 +54,8 @@ from fastapi import UploadFile
 
 # Use the same embedding dimensionality as the RAG agent
 EMBEDDINGS_DIMENSIONS = 1536
+EMBEDDING_MODEL_NAME = "text-embedding-3-small"
+RAG_BACKEND = os.getenv("RAG_BACKEND", "azure").lower()
 
 def load_azd_env():
     # """Get path to current azd env file and load file using python-dotenv"""
@@ -262,22 +267,43 @@ async def wait_for_indexing(azure_credential, azure_search_endpoint, indexer_nam
             logger.info("Indexing in progress, waiting 5 seconds...")
             await asyncio.sleep(5)
 async def process_upload_and_index(index_name: str, upload_files: List[UploadFile]):
-    # Store each file in the container named index_name
     logging.basicConfig(level=logging.WARNING, format="%(message)s", datefmt="[%X]")
     logger = logging.getLogger("process_upload_and_index")
     logger.setLevel(logging.INFO)
-    
+
+    if RAG_BACKEND == "faiss":
+        docs_dir = os.path.join(os.path.dirname(__file__), "data", "ai-search-index", index_name)
+        os.makedirs(docs_dir, exist_ok=True)
+        docs: list[str] = []
+        for file in upload_files:
+            content = await file.read()
+            file_path = os.path.join(docs_dir, file.filename)
+            with open(file_path, "wb") as f:
+                f.write(content)
+            try:
+                docs.append(content.decode("utf-8"))
+            except Exception:
+                docs.append(content.decode("utf-8", errors="ignore"))
+
+        embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+        embeddings = embedding_model.encode(docs)
+        index = faiss.IndexFlatL2(embeddings.shape[1])
+        index.add(np.array(embeddings))
+        index_path = os.path.join(docs_dir, f"{index_name}.faiss")
+        faiss.write_index(index, index_path)
+        with open(f"{index_path}.docs", "w", encoding="utf-8") as f:
+            json.dump(docs, f)
+        logger.info("Local FAISS index created at %s", index_path)
+        return
+
     AZURE_OPENAI_EMBEDDING_ENDPOINT = os.environ["AZURE_OPENAI_ENDPOINT"]
     AZURE_OPENAI_EMBEDDING_DEPLOYMENT = os.environ["AZURE_OPENAI_EMBEDDING_MODEL"]
     AZURE_OPENAI_EMBEDDING_MODEL = os.environ["AZURE_OPENAI_EMBEDDING_MODEL"]
 
-    # UAMI_ID = os.environ["UAMI_ID"]
     UAMI_RESOURCE_ID = os.environ["UAMI_RESOURCE_ID"]
-
     AZURE_SEARCH_ENDPOINT = os.environ["AZURE_SEARCH_SERVICE_ENDPOINT"]
-
-    AZURE_STORAGE_ENDPOINT =  os.getenv("AZURE_STORAGE_ACCOUNT_ENDPOINT")
-    AZURE_STORAGE_CONNECTION_STRING =  f"ResourceId={os.getenv('AZURE_STORAGE_ACCOUNT_ID')}"
+    AZURE_STORAGE_ENDPOINT = os.getenv("AZURE_STORAGE_ACCOUNT_ENDPOINT")
+    AZURE_STORAGE_CONNECTION_STRING = f"ResourceId={os.getenv('AZURE_STORAGE_ACCOUNT_ID')}"
 
     azure_credential = DefaultAzureCredential()
     azure_storage_container = index_name
@@ -290,9 +316,7 @@ async def process_upload_and_index(index_name: str, upload_files: List[UploadFil
     container_client = blob_client.get_container_client(azure_storage_container)
     if not await container_client.exists():
         await container_client.create_container()
-        logger.info(
-            f"Created blob storage container: {azure_storage_container}"
-        )
+        logger.info("Created blob storage container: %s", azure_storage_container)
     existing_blobs = [blob.name async for blob in container_client.list_blobs()]
 
     for file in upload_files:
@@ -301,21 +325,20 @@ async def process_upload_and_index(index_name: str, upload_files: List[UploadFil
         if filename in existing_blobs:
             logger.info("Blob already exists, skipping file: %s", filename)
         else:
-            logger.info("Uploading blob for file: %s", filename)
+            logger.info("Uploading file: %s", filename)
             await container_client.upload_blob(filename, file_contents, overwrite=True)
 
     setup_index(
         azure_credential,
         azure_storage_endpoint=AZURE_STORAGE_ENDPOINT,
         index_name=f"{index_name}",
-            # uami_id=UAMI_ID,
-            uami_resource_id=UAMI_RESOURCE_ID,
-            azure_search_endpoint=AZURE_SEARCH_ENDPOINT,
-            azure_storage_connection_string=AZURE_STORAGE_CONNECTION_STRING,
-            azure_storage_container=index_name,
-            azure_openai_embedding_endpoint=AZURE_OPENAI_EMBEDDING_ENDPOINT,
-            azure_openai_embedding_deployment=AZURE_OPENAI_EMBEDDING_DEPLOYMENT,
-            azure_openai_embedding_model=AZURE_OPENAI_EMBEDDING_MODEL,
+        uami_resource_id=UAMI_RESOURCE_ID,
+        azure_search_endpoint=AZURE_SEARCH_ENDPOINT,
+        azure_storage_connection_string=AZURE_STORAGE_CONNECTION_STRING,
+        azure_storage_container=index_name,
+        azure_openai_embedding_endpoint=AZURE_OPENAI_EMBEDDING_ENDPOINT,
+        azure_openai_embedding_deployment=AZURE_OPENAI_EMBEDDING_DEPLOYMENT,
+        azure_openai_embedding_model=AZURE_OPENAI_EMBEDDING_MODEL,
         azure_openai_embeddings_dimensions=EMBEDDINGS_DIMENSIONS,
     )
 
