@@ -61,6 +61,9 @@ def build_chat_client(agent_name: str | None = None, agent_type: str | None = No
     timeout = cfg.pop("timeout", 60)
     provider = cfg.pop("provider", "openai").lower()
 
+    # Filter out unsupported args for the client constructor
+    cfg.pop("stream", None)
+
     if provider == "azure":
         return AzureOpenAIChatCompletionClient(timeout=timeout, **cfg)
     else:
