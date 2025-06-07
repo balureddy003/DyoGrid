@@ -490,7 +490,7 @@ async def upload_files(indexName: str = Form(...), files: List[UploadFile] = Fil
         # print("Uploading file:", file.filename)
         logger.info(f"Uploading file: {file.filename}")
     try:
-        aisearch.process_upload_and_index(indexName, files)
+        await aisearch.process_upload_and_index(indexName, files)
         logger.info(f"Files processed and indexed successfully.")
     except Exception as err:
         logger.error(f"Error processing upload and index: {str(err)}")

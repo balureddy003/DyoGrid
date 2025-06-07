@@ -2,11 +2,13 @@ import json
 import logging
 import os
 import subprocess
-import time
+import asyncio
 
 from azure.core.exceptions import ResourceExistsError
 from azure.identity import AzureDeveloperCliCredential, DefaultAzureCredential, ManagedIdentityCredential
-from azure.search.documents.indexes import SearchIndexClient, SearchIndexerClient
+from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes import SearchIndexerClient as SyncSearchIndexerClient
+from azure.search.documents.indexes.aio import SearchIndexerClient as AsyncSearchIndexerClient
 from azure.search.documents.indexes.models import (
     AzureOpenAIEmbeddingSkill,
     AzureOpenAIVectorizerParameters,
@@ -40,7 +42,8 @@ from azure.search.documents.indexes.models import (
     VectorSearchAlgorithmMetric,
     VectorSearchProfile,
 )
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient as SyncBlobServiceClient
+from azure.storage.blob.aio import BlobServiceClient as AsyncBlobServiceClient
 from dotenv import load_dotenv
 from typing import List
 from fastapi import UploadFile
@@ -67,7 +70,7 @@ def load_azd_env():
 
 def setup_index(azure_credential, azure_storage_endpoint, uami_resource_id,  index_name, azure_search_endpoint, azure_storage_connection_string, azure_storage_container, azure_openai_embedding_endpoint, azure_openai_embedding_deployment, azure_openai_embedding_model, azure_openai_embeddings_dimensions):
     index_client = SearchIndexClient(azure_search_endpoint, azure_credential)
-    indexer_client = SearchIndexerClient(azure_search_endpoint, azure_credential)
+    indexer_client = SyncSearchIndexerClient(azure_search_endpoint, azure_credential)
 
     logging.basicConfig(level=logging.WARNING, format="%(message)s", datefmt="[%X]")
     logger = logging.getLogger("dream-team")
@@ -75,7 +78,7 @@ def setup_index(azure_credential, azure_storage_endpoint, uami_resource_id,  ind
 
     logger.info(f"Setting up Azure AI Search index: {azure_storage_container}")
 
-    blob_client = BlobServiceClient(
+    blob_client = SyncBlobServiceClient(
         account_url=azure_storage_endpoint, credential=azure_credential,
         max_single_put_size=4 * 1024 * 1024
     )
@@ -215,9 +218,9 @@ def upload_documents(azure_credential, source_folder, indexer_name, azure_search
     logging.basicConfig(level=logging.WARNING, format="%(message)s", datefmt="[%X]")
     logger = logging.getLogger("upload_documents")
     logger.setLevel(logging.INFO)
-    indexer_client = SearchIndexerClient(azure_search_endpoint, azure_credential)
+    indexer_client = SyncSearchIndexerClient(azure_search_endpoint, azure_credential)
     # Upload the documents in /data folder to the blob storage container
-    blob_client = BlobServiceClient(
+    blob_client = SyncBlobServiceClient(
         account_url=azure_storage_endpoint, credential=azure_credential,
         max_single_put_size=4 * 1024 * 1024
     )
@@ -244,21 +247,20 @@ def upload_documents(azure_credential, source_folder, indexer_name, azure_search
     except ResourceExistsError:
         logger.info("Indexer already running, not starting again")
 
-def wait_for_indexing(azure_credential, azure_search_endpoint, indexer_name):
+async def wait_for_indexing(azure_credential, azure_search_endpoint, indexer_name):
     """Poll the indexer status every 5 seconds until indexing is complete."""
-    indexer_client = SearchIndexerClient(azure_search_endpoint, azure_credential)
-    logger = logging.getLogger("wait_for_indexing")
-    logger.setLevel(logging.INFO)
-    while True:
-        status_response = indexer_client.get_indexer_status(indexer_name)
-        # Assuming last_result.status returns a status string like "inProgress" when still indexing.
-        current_status = getattr(status_response.last_result, "status", None)
-        if current_status is not None and current_status.lower() != "inprogress":
-            logger.info("Indexing complete with status: %s", current_status)
-            break
-        logger.info("Indexing in progress, waiting 5 seconds...")
-        time.sleep(5)
-def process_upload_and_index(index_name: str, upload_files: List[UploadFile]):
+    async with AsyncSearchIndexerClient(azure_search_endpoint, azure_credential) as indexer_client:
+        logger = logging.getLogger("wait_for_indexing")
+        logger.setLevel(logging.INFO)
+        while True:
+            status_response = await indexer_client.get_indexer_status(indexer_name)
+            current_status = getattr(status_response.last_result, "status", None)
+            if current_status is not None and current_status.lower() != "inprogress":
+                logger.info("Indexing complete with status: %s", current_status)
+                break
+            logger.info("Indexing in progress, waiting 5 seconds...")
+            await asyncio.sleep(5)
+async def process_upload_and_index(index_name: str, upload_files: List[UploadFile]):
     # Store each file in the container named index_name
     logging.basicConfig(level=logging.WARNING, format="%(message)s", datefmt="[%X]")
     logger = logging.getLogger("process_upload_and_index")
@@ -279,28 +281,32 @@ def process_upload_and_index(index_name: str, upload_files: List[UploadFile]):
     azure_credential = DefaultAzureCredential()
     azure_storage_container = index_name
 
-    blob_client = BlobServiceClient(
-        account_url=AZURE_STORAGE_ENDPOINT, credential=azure_credential,
-        max_single_put_size=4 * 1024 * 1024
+    blob_client = AsyncBlobServiceClient(
+        account_url=AZURE_STORAGE_ENDPOINT,
+        credential=azure_credential,
+        max_single_put_size=4 * 1024 * 1024,
     )
     container_client = blob_client.get_container_client(azure_storage_container)
-    if not container_client.exists():
-        container_client.create_container()
-        logger.info(f"Created blob storage container: {azure_storage_container}")
-    existing_blobs = [blob.name for blob in container_client.list_blobs()]
+    if not await container_client.exists():
+        await container_client.create_container()
+        logger.info(
+            f"Created blob storage container: {azure_storage_container}"
+        )
+    existing_blobs = [blob.name async for blob in container_client.list_blobs()]
 
     for file in upload_files:
-        file_contents = file.file.read()
+        file_contents = await file.read()
         filename = file.filename
         if filename in existing_blobs:
             logger.info("Blob already exists, skipping file: %s", filename)
         else:
             logger.info("Uploading blob for file: %s", filename)
-            container_client.upload_blob(filename, file_contents, overwrite=True)
+            await container_client.upload_blob(filename, file_contents, overwrite=True)
 
-    setup_index(azure_credential,
-                    azure_storage_endpoint=AZURE_STORAGE_ENDPOINT,
-            index_name=f"{index_name}",
+    setup_index(
+        azure_credential,
+        azure_storage_endpoint=AZURE_STORAGE_ENDPOINT,
+        index_name=f"{index_name}",
             # uami_id=UAMI_ID,
             uami_resource_id=UAMI_RESOURCE_ID,
             azure_search_endpoint=AZURE_SEARCH_ENDPOINT,
@@ -309,9 +315,10 @@ def process_upload_and_index(index_name: str, upload_files: List[UploadFile]):
             azure_openai_embedding_endpoint=AZURE_OPENAI_EMBEDDING_ENDPOINT,
             azure_openai_embedding_deployment=AZURE_OPENAI_EMBEDDING_DEPLOYMENT,
             azure_openai_embedding_model=AZURE_OPENAI_EMBEDDING_MODEL,
-            azure_openai_embeddings_dimensions=EMBEDDINGS_DIMENSIONS)
-    
-    wait_for_indexing(azure_credential, AZURE_SEARCH_ENDPOINT, index_name)
+        azure_openai_embeddings_dimensions=EMBEDDINGS_DIMENSIONS,
+    )
+
+    await wait_for_indexing(azure_credential, AZURE_SEARCH_ENDPOINT, index_name)
 
 
 if __name__ == "__main__":
@@ -349,7 +356,7 @@ if __name__ == "__main__":
     AZURE_STORAGE_ENDPOINT =  os.getenv("AZURE_STORAGE_ACCOUNT_ENDPOINT")
     AZURE_STORAGE_CONNECTION_STRING =  f"ResourceId={os.getenv('AZURE_STORAGE_ACCOUNT_ID')}"
 
-    blob_service_client = BlobServiceClient(AZURE_STORAGE_ENDPOINT, azure_credential)
+    blob_service_client = SyncBlobServiceClient(AZURE_STORAGE_ENDPOINT, azure_credential)
 
     source_directory = f"{os.path.dirname(__file__)}/./data/ai-search-index"
     entries = os.listdir(source_directory)
