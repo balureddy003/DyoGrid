@@ -374,9 +374,9 @@ class MagenticOneHelper:
                     index_name=agent["index_name"],
                     description=agent["description"],
                     AZURE_SEARCH_SERVICE_ENDPOINT=os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT"),
-                    use_azure_search=False,
+                    use_azure_search=(RAG_BACKEND == "azure"),
                     # AZURE_SEARCH_ADMIN_KEY=os.getenv("AZURE_SEARCH_ADMIN_KEY")
-                    )
+                )
                 if RAG_BACKEND == "faiss":
                     rag_agent.load_faiss_data(docs)
                 agent_list.append(_wrap_with_proxy(rag_agent))
