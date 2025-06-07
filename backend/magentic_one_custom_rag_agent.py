@@ -22,6 +22,8 @@ MAGENTIC_ONE_RAG_DESCRIPTION = "An agent that has access to internal index and c
 MAGENTIC_ONE_RAG_SYSTEM_MESSAGE = """
         You are a helpful AI Assistant.
         When given a user query, use available tools to help the user with their request.
+        The `do_search` tool returns a JSON object with `faiss` and `azure` keys.
+        Each contains text snippets and related metadata. Use this information to craft your answer.
         Reply "TERMINATE" in the end when everything is done."""
 
 class MagenticOneRAGAgent(AssistantAgent):
@@ -152,24 +154,40 @@ class MagenticOneRAGAgent(AssistantAgent):
     def load_faiss_data(self, docs: list[str]):
         self.build_faiss_index(docs)
 
-    async def do_search(self, query: str) -> str:
+    async def do_search(self, query: str) -> dict:
+        """Search using FAISS and optionally Azure Cognitive Search.
+
+        Args:
+            query: The query string.
+
+        Returns:
+            Dict with keys ``"faiss"`` and ``"azure"`` containing lists of
+            result dictionaries.  Each dictionary has ``"text"`` as the text
+            snippet and may include additional metadata such as ``"score``",
+            ``"parent_id```, ``"chunk_id```, or ``"error"``.
+        """
+
+        results: dict[str, list[dict]] = {"faiss": [], "azure": []}
+
         # ---------- FAISS Search ----------
-        faiss_answer = ""
         try:
             if self.faiss_index is not None:
                 query_embedding = self.embedding_model.encode([query])
                 D, I = self.faiss_index.search(np.array(query_embedding), k=1)
-                faiss_answer = self.faiss_documents[I[0][0]]
+                idx = int(I[0][0])
+                score = float(D[0][0])
+                snippet = self.faiss_documents[idx]
+                results["faiss"].append({"text": snippet, "score": score, "index": idx})
             else:
-                faiss_answer = "FAISS index is not built yet."
+                results["faiss"].append({"error": "FAISS index is not built yet."})
         except Exception as e:
-            faiss_answer = f"FAISS search failed with error: {str(e)}"
+            results["faiss"].append({"error": f"FAISS search failed with error: {str(e)}"})
 
         # ---------- Azure Cognitive Search ----------
-        azure_answer = "Azure search disabled."
         if self.use_azure_search and self._search_client is not None:
             try:
                 from azure.search.documents.models import VectorizableTextQuery
+
                 fields = "text_vector"
                 vector_query = VectorizableTextQuery(
                     text=query,
@@ -177,14 +195,23 @@ class MagenticOneRAGAgent(AssistantAgent):
                     fields=fields,
                     exhaustive=True,
                 )
-                results = self._search_client.search(
+                search_results = self._search_client.search(
                     search_text=None,
                     vector_queries=[vector_query],
                     select=["parent_id", "chunk_id", "chunk"],
                     top=1,
                 )
-                azure_answer = "".join(r["chunk"] for r in results)
+                for r in search_results:
+                    results["azure"].append(
+                        {
+                            "text": r.get("chunk"),
+                            "parent_id": r.get("parent_id"),
+                            "chunk_id": r.get("chunk_id"),
+                        }
+                    )
             except Exception as e:
-                azure_answer = f"Azure Search failed with error: {str(e)}"
+                results["azure"].append({"error": f"Azure Search failed with error: {str(e)}"})
+        else:
+            results["azure"].append({"error": "Azure search disabled."})
 
-        return f"FAISS Search Result:\n{faiss_answer}\n\nAzure Search Result:\n{azure_answer}"
+        return results
