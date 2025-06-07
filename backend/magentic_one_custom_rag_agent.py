@@ -11,6 +11,7 @@ import os
 import json
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
+from llm_config import build_embedding_client, get_llm_provider, LITELLM_EMBED_MODEL
 
 RAG_BACKEND = os.getenv("RAG_BACKEND", "azure").lower()
 
@@ -90,19 +91,14 @@ class MagenticOneRAGAgent(AssistantAgent):
                 )
         # self.AZURE_SEARCH_ADMIN_KEY = AZURE_SEARCH_ADMIN_KEY
 
-        # Client used to generate embeddings that align with Azure Search
-        credential = DefaultAzureCredential()
-        token_provider = get_bearer_token_provider(
-            credential, "https://cognitiveservices.azure.com/.default"
-        )
-        self._embedding_client = AzureOpenAI(
-            api_version="2024-12-01-preview",
-            azure_ad_token_provider=token_provider,
-            timeout=int(os.getenv("OPENAI_TIMEOUT", 60)),
-        )
-        self.embedding_model = os.getenv(
-            "AZURE_OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
-        )
+        # Client used to generate embeddings, respecting LLM_PROVIDER
+        self._embedding_client = build_embedding_client()
+        if get_llm_provider() == "ollama":
+            self.embedding_model = LITELLM_EMBED_MODEL
+        else:
+            self.embedding_model = os.getenv(
+                "AZURE_OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
+            )
         self.faiss_index = None
         self.faiss_documents = []
         self.faiss_index_path = faiss_index_path or f"{self.index_name}.faiss"
