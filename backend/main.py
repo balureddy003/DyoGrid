@@ -190,6 +190,8 @@ async def summarize_plan(plan, client):
 async def display_log_message(log_entry, logs_dir, session_id, user_id, conversation=None):
     _log_entry_json = log_entry
     _user_id = user_id
+    log_path = os.path.join(logs_dir, f"{session_id}.log")
+    logger = logging.getLogger("display_log_message")
     
     _response = AutoGenMessage(
         time=get_current_time(),
@@ -274,6 +276,12 @@ async def display_log_message(log_entry, logs_dir, session_id, user_id, conversa
             run_mode_locally=None,
             timestamp=_response.time
         )
+    if DEBUG_AGENT_LOGS:
+        try:
+            write_log(log_path, _response.to_json())
+            logger.debug(f"Wrote log entry to {log_path}")
+        except Exception as e:
+            logger.error(f"Failed to write log entry: {e}")
 
     return _response
 
