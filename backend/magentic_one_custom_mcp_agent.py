@@ -1,4 +1,4 @@
-from llm_config import get_llm_config
+from llm_config import get_llm_config, build_chat_client
 import os
 from autogen_agentchat.agents import AssistantAgent
 from autogen_core.models import (
@@ -54,16 +54,7 @@ class MagenticOneCustomMCPAgent(AssistantAgent):
         user_id: str = None
     ):
         if model_client is None:
-            llm = get_llm_config()
-            print(f"[LLM Config] {llm}")  # Log the full LLM config
-            model_client = ChatCompletionClient(
-                base_url=llm.get("base_url", "http://localhost:4000/v1"),
-                api_key=llm.get("api_key", "sk-no-key-needed"),
-                model=llm.get("model", "ollama/deepseek-coder:6.7b"),
-                function_calling=llm.get("function_calling", True),
-                json_output=llm.get("json_output", True),
-                stream=llm.get("stream", True),
-            )
+            model_client = build_chat_client(agent_name=name, agent_type="CustomMCP")
         # # local Stdio server
         # import os
         # server_params = StdioServerParams(

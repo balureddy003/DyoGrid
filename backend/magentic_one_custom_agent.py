@@ -1,6 +1,6 @@
 from autogen_agentchat.agents import AssistantAgent
 from autogen_core.models import ChatCompletionClient
-from llm_config import get_llm_config
+from llm_config import get_llm_config, build_chat_client
 from autogen_ext.models.openai import (
     AzureOpenAIChatCompletionClient,
     OpenAIChatCompletionClient,
@@ -8,20 +8,12 @@ from autogen_ext.models.openai import (
 import os
 
 
-def _build_llm_client():
+def _build_llm_client(agent_name: str):
     """
     Create a ChatCompletionClient from the dict returned by get_llm_config().
     Supports 'azure' and 'openai' (incl. LiteLLM/Ollama proxy) providers.
     """
-    cfg = get_llm_config().copy()
-    timeout = cfg.pop("timeout", 60)
-    provider = cfg.pop("provider", "openai").lower()
-
-    if provider == "azure":
-        return AzureOpenAIChatCompletionClient(timeout=timeout, **cfg)
-    else:
-        # treat every non‑azure provider as OpenAI compatible
-        return OpenAIChatCompletionClient(timeout=timeout, **cfg)
+    return build_chat_client(agent_name=agent_name, agent_type="Custom")
 
 class MagenticOneCustomAgent(AssistantAgent):
     """Custom agent without function calling support."""
@@ -34,7 +26,7 @@ class MagenticOneCustomAgent(AssistantAgent):
         description: str = "",
     ):
         if model_client is None:
-            model_client = _build_llm_client()
+            model_client = _build_llm_client(name)
 
         # Ensure function calling is not used
         super().__init__(
