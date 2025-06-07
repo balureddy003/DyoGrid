@@ -82,7 +82,8 @@ class MagenticOneRAGAgent(AssistantAgent):
                 )
         # self.AZURE_SEARCH_ADMIN_KEY = AZURE_SEARCH_ADMIN_KEY
 
-        self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+        # Align embeddings with the Azure Search index
+        self.embedding_model = SentenceTransformer("text-embedding-3-small")
         self.faiss_index = None
         self.faiss_documents = []
         self.faiss_index_path = faiss_index_path or f"{self.index_name}.faiss"

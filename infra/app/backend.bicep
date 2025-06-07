@@ -11,7 +11,7 @@ param exists bool
 param azureOpenaiResourceName string = 'dreamv2' 
 param azureOpenaiDeploymentName string = 'gpt-4o'
 param azureOpenaiDeploymentNameMini string = 'gpt-4o-mini'
-param azureOpenaiDeploymentNameEmbedding string = 'text-embedding-3-large'
+param azureOpenaiDeploymentNameEmbedding string = 'text-embedding-3-small'
 
 @description('Custom subdomain name for the OpenAI resource (must be unique in the region)')
 param customSubDomainName string
@@ -617,7 +617,7 @@ resource openaideploymentembedding 'Microsoft.CognitiveServices/accounts/deploym
   }
   properties: {
     model: {
-      name: 'text-embedding-3-large'
+      name: 'text-embedding-3-small'
       format: 'OpenAI'
       version: '1'
       
