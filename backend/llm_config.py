@@ -8,13 +8,16 @@ LITELLM_EMBED_MODEL = os.getenv("LITELLM_EMBED_MODEL", "nomic-embed-text")
 
 
 def _load_agent_model_map() -> dict:
-    """Parse AGENT_MODEL_MAP env var into a dictionary."""
+    """Parse AGENT_MODEL_MAP env var into a dictionary.
+
+    Keys are normalised to lower case so that mapping is case-insensitive.
+    """
     mapping = {}
     raw = os.getenv("AGENT_MODEL_MAP", "")
     for item in raw.split(","):
         if ":" in item:
             agent, model = item.split(":", 1)
-            mapping[agent.strip()] = model.strip()
+            mapping[agent.strip().lower()] = model.strip()
     return mapping
 
 def get_llm_provider():
@@ -27,10 +30,12 @@ def get_llm_config(agent_name: str | None = None, agent_type: str | None = None)
 
     model = None
     model_map = _load_agent_model_map()
-    if agent_name and agent_name in model_map:
-        model = model_map[agent_name]
-    elif agent_type and agent_type in model_map:
-        model = model_map[agent_type]
+    lookup_name = agent_name.lower() if agent_name else None
+    lookup_type = agent_type.lower() if agent_type else None
+    if lookup_name and lookup_name in model_map:
+        model = model_map[lookup_name]
+    elif lookup_type and lookup_type in model_map:
+        model = model_map[lookup_type]
 
     if provider == "azure":
         return {
@@ -46,7 +51,8 @@ def get_llm_config(agent_name: str | None = None, agent_type: str | None = None)
         default_chat = LITELLM_CHAT_MODEL
         default_tool = LITELLM_TOOL_MODEL
         chosen = model or default_chat
-        is_tool = chosen == default_tool
+        force_tools = os.getenv("LITELLM_ALWAYS_ENABLE_TOOLS", "false").lower() == "true"
+        is_tool = force_tools or chosen == default_tool
         return {
             "provider": "openai",
             "model": chosen,
