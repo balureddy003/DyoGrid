@@ -102,3 +102,8 @@ pip install litellm
 pip install 'litellm[proxy]'
  litellm --config litellm.config.yaml
 
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our process and guidelines.
+
