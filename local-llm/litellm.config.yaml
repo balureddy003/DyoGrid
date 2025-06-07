@@ -31,4 +31,4 @@ model_list:
       timeout: 600
 
 litellm_settings:
-  drop_params: false
+  drop_params: true
