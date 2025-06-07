@@ -27,3 +27,18 @@ uv venv
 pip install litellm
 pip install 'litellm[proxy]'
  litellm --config litellm.config.yaml
+
+### documentation
+The documentation website uses [Docusaurus](https://docusaurus.io).
+
+To start a local docs server:
+```bash
+cd website
+npm install
+npm run start
+```
+
+To build the static site:
+```bash
+npm run build
+```
