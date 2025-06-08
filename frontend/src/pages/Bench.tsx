@@ -50,7 +50,7 @@ export default function Bench() {
   const [output, setOutput] = useState<string>('');
   const [results, setResults] = useState<Record<string, string>[]>([]);
   const [scenario, setScenario] = useState('scenarios/basic.jsonl');
-  const [config, setConfig] = useState('OAI_CONFIG_LIST.json');
+  const [config, setConfig] = useState('');
   const [repeats, setRepeats] = useState(1);
   const [running, setRunning] = useState(false);
 
@@ -70,8 +70,8 @@ export default function Bench() {
       toast.info('Benchmark started');
       await axios.post(`${BASE_URL}/bench/run`, {
         scenario,
-        config,
-        repeats
+        repeats,
+        ...(config ? { config } : {})
       });
       const res = await axios.get(`${BASE_URL}/bench/results`);
       setOutput(res.data.csv);

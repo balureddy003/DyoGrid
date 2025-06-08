@@ -655,6 +655,11 @@ async def run_bench(payload: dict):
         results_dir = payload.get("results_dir", "bench_results")
         subsample = payload.get("subsample")
 
+        if scenario and not os.path.exists(scenario):
+            raise HTTPException(status_code=400, detail=f"Scenario not found: {scenario}")
+        if config_path and not os.path.isfile(config_path):
+            raise HTTPException(status_code=400, detail=f"Config file not found: {config_path}")
+
         bench_logger.info(
             "Starting benchmark scenario=%s config=%s repeats=%s results_dir=%s sub=%s",
             scenario,
@@ -669,7 +674,8 @@ async def run_bench(payload: dict):
         from autogenbench.run_cmd import run_scenarios
         from autogen import config_list_from_json
 
-        config_list = config_list_from_json(env_or_file=config_path)
+        env_name = config_path if config_path else "OAI_CONFIG_LIST"
+        config_list = config_list_from_json(env_or_file=env_name)
         run_scenarios(
             scenario=scenario,
             n_repeats=repeats,
