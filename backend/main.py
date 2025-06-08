@@ -25,7 +25,9 @@ from datetime import datetime
 from schemas import AutoGenMessage
 from typing import List
 import time
-logging.getLogger("pymongo.command").setLevel(logging.WARNING)
+logging.getLogger("pymongo.topology").setLevel(logging.INFO)
+logging.getLogger("pymongo.pool").setLevel(logging.INFO)
+logging.getLogger("pymongo").setLevel(logging.WARNING)
 print("Starting the server...")
 load_dotenv()
 DEBUG_AGENT_LOGS = os.getenv("DEBUG_AGENT_LOGS", "false").lower() == "true"
@@ -442,12 +444,12 @@ async def list_all_conversations(
     user: dict = Depends(validate_token)
     ):
     try:
-        user_id = request_data.get("user_id")
+        user_id = request_data.get("user_id") or user["sub"]
         page = request_data.get("page", 1)
         page_size = request_data.get("page_size", 20)
-        conversations = app.state.db.fetch_user_conversatons(
-            user_id=None, 
-            page=page, 
+        conversations = app.state.db.fetch_user_conversations(
+            user_id=user_id,
+            page=page,
             page_size=page_size
         )
         return conversations

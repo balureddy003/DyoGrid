@@ -6,7 +6,8 @@ from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 from bson import ObjectId
 import time
-
+import logging
+from math import ceil
 # Remove ALL old agentchat imports!
 # from autogen_agentchat.base import TaskResult
 # from autogen_agentchat.messages import ...
@@ -69,6 +70,11 @@ class CosmosDB:
         - conversation_details: metadata (dict or object)
         - conversation_dict: any additional data (dict)
         """
+        logging.info(
+            f"store_conversation called: user_id={getattr(conversation_details, 'session_user', None)}, "
+            f"session_id={getattr(conversation_details, 'session_id', None)}, "
+            f"message_count={(len(conversation.get('messages', [])) if isinstance(conversation, dict) else 'n/a')}"
+        )
         # Gracefully handle both dict-based and object-based metadata
         document = {
             "user_id": getattr(conversation_details, "session_user", None)
@@ -92,7 +98,44 @@ class CosmosDB:
         else:
             document["id"] = str(uuid.uuid4())
             return container.create_item(body=document)
+    def fetch_user_conversation(self, user_id: str) -> List[dict]:
+        """
+        Fetch all conversations for a user, ordered by timestamp descending.
+        """
+        container = self.get_container("ag_demo")
+        if self.use_local:
+            docs = list(container.find({"user_id": user_id}).sort("timestamp", -1))
+            return convert_objectid(docs)
+        else:
+            query = "SELECT * FROM c WHERE c.user_id = @user_id ORDER BY c.timestamp DESC"
+            params = [{"name": "@user_id", "value": user_id}]
+            return list(container.query_items(
+                query=query,
+                parameters=params,
+                enable_cross_partition_query=True
+            ))
+    def fetch_user_conversations(self, user_id: str, page: int = 1, page_size: int = 20) -> dict:
+        """
+        Fetch a paginated list of conversations for a user.
+        """
+        # Get the full list
+        all_conversations = self.fetch_user_conversation(user_id=user_id)
+        total_count = len(all_conversations)
 
+        # Calculate slice
+        start = (page - 1) * page_size
+        end = start + page_size
+        paged = all_conversations[start:end]
+
+        # Compute total pages
+        total_pages = ceil(total_count / page_size) if page_size else 0
+
+        return {
+            "conversations": paged,
+            "total_count": total_count,
+            "page": page,
+            "total_pages": total_pages
+        }
     def create_team(self, team: dict):
         container = self.get_container("agent_teams")
         if self.use_local:
