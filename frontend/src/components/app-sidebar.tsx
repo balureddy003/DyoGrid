@@ -65,6 +65,13 @@ const data = {
       items: [{ title: "Tools", url: "/tools" }],
     },
     {
+      title: "Bench",
+      url: "/bench",
+      icon: Frame,
+      isActive: true,
+      items: [{ title: "Bench", url: "/bench" }],
+    },
+    {
       title: "Settings",
       url: "#",
       icon: Settings2,

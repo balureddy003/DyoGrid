@@ -638,3 +638,51 @@ async def generate_pdf_tool_endpoint(payload: dict):
         return {"path": path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# AutoGenBench Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/bench/run")
+async def run_bench(payload: dict):
+    """Run AutoGenBench scenarios and store results."""
+    try:
+        scenario = payload.get("scenario")
+        repeats = int(payload.get("repeats", 1))
+        config_path = payload.get("config")
+        results_dir = payload.get("results_dir", "bench_results")
+        subsample = payload.get("subsample")
+
+        from autogenbench.run_cmd import run_scenarios
+        from autogen import config_list_from_json
+
+        config_list = config_list_from_json(env_or_file=config_path)
+        run_scenarios(
+            scenario=scenario,
+            n_repeats=repeats,
+            is_native=True,
+            config_list=config_list,
+            requirements=None,
+            results_dir=results_dir,
+            subsample=float(subsample) if subsample is not None else None,
+        )
+
+        return {"status": "completed", "results_dir": results_dir}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/bench/results")
+async def bench_results(results_dir: str = Query("bench_results")):
+    """Return tabulated benchmark results."""
+    try:
+        import io, contextlib
+        from autogenbench.tabulate_cmd import default_tabulate
+
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            default_tabulate(["bench", results_dir, "--csv"])
+        return {"csv": buffer.getvalue()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

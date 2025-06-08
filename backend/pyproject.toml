@@ -37,5 +37,6 @@ dependencies = [
     "beautifulsoup4",
     "pillow>=11.0",
     "requests>=2.31",
-    "fpdf>=1.7.2"
+    "fpdf>=1.7.2",
+    "autogenbench==0.0.3"
 ]

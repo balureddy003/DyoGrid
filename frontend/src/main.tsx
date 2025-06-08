@@ -8,6 +8,7 @@ import Introduction from './pages/Introduction'
 import GetStarted from './pages/GetStarted'
 import GeneralSettings from './pages/GeneralSettings'
 import Tools from './pages/Tools'
+import Bench from './pages/Bench'
 import './index.css'
 import { UserProvider, UserContext, getUserInfo } from './contexts/UserContext'
 import { TeamsProvider } from './contexts/TeamsContext'
@@ -38,6 +39,7 @@ function App() {
       <Route path="/get-started" element={<GetStarted />} />
       <Route path="/general" element={<GeneralSettings />} />
       <Route path="/tools" element={<Tools />} />
+      <Route path="/bench" element={<Bench />} />
     </Routes>
   );
 }
