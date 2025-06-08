@@ -38,6 +38,7 @@ logging.getLogger("pymongo.pool").setLevel(logging.INFO)
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 print("Starting the server...")
 load_dotenv()
+bench_logger = logging.getLogger("bench")
 DEBUG_AGENT_LOGS = os.getenv("DEBUG_AGENT_LOGS", "false").lower() == "true"
 # Configure root logging level based on DEBUG_AGENT_LOGS
 # We'll adjust in lifespan.
@@ -637,4 +638,66 @@ async def generate_pdf_tool_endpoint(payload: dict):
         path = await generate_pdf(**payload)
         return {"path": path}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# AutoGenBench Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/bench/run")
+async def run_bench(payload: dict):
+    """Run AutoGenBench scenarios and store results."""
+    try:
+        scenario = payload.get("scenario")
+        repeats = int(payload.get("repeats", 1))
+        config_path = payload.get("config")
+        results_dir = payload.get("results_dir", "bench_results")
+        subsample = payload.get("subsample")
+
+        bench_logger.info(
+            "Starting benchmark scenario=%s config=%s repeats=%s results_dir=%s sub=%s",
+            scenario,
+            config_path,
+            repeats,
+            results_dir,
+            subsample,
+        )
+
+        os.makedirs(results_dir, exist_ok=True)
+
+        from autogenbench.run_cmd import run_scenarios
+        from autogen import config_list_from_json
+
+        config_list = config_list_from_json(env_or_file=config_path)
+        run_scenarios(
+            scenario=scenario,
+            n_repeats=repeats,
+            is_native=True,
+            config_list=config_list,
+            requirements=None,
+            results_dir=results_dir,
+            subsample=float(subsample) if subsample is not None else None,
+        )
+        bench_logger.info("Benchmark completed: results stored in %s", results_dir)
+        return {"status": "completed", "results_dir": results_dir}
+    except Exception as e:
+        bench_logger.exception("Benchmark run failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/bench/results")
+async def bench_results(results_dir: str = Query("bench_results")):
+    """Return tabulated benchmark results."""
+    try:
+        import io, contextlib
+        from autogenbench.tabulate_cmd import default_tabulate
+        bench_logger.debug("Fetching benchmark results from %s", results_dir)
+
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            default_tabulate(["bench", results_dir, "--csv"])
+        return {"csv": buffer.getvalue()}
+    except Exception as e:
+        bench_logger.exception("Fetching results failed")
         raise HTTPException(status_code=500, detail=str(e))
