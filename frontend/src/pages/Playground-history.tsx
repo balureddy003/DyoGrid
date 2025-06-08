@@ -175,7 +175,7 @@ export default function PlaygroundHistory() {
                   <BreadcrumbList>
                     <BreadcrumbItem className="hidden md:block">
                       <BreadcrumbLink href="#">
-                        AutoGen &amp; MagenticOne demo
+                       DyoGrid
                       </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator className="hidden md:block" />
@@ -206,7 +206,7 @@ export default function PlaygroundHistory() {
                 {/* Chat Interface */}
                 <Card className="md:col-span-2 flex flex-col">
                   <CardHeader>
-                    <CardTitle>Agentic Workflows History</CardTitle>
+                    <CardTitle>DyoGrid Workflows History</CardTitle>
                     <div className="space-x-2 container text-center">
                       <p className="text-sm text-muted-foreground inline">Quick actions:</p>
                       <Button variant="outline" size="sm">
