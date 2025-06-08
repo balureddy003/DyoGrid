@@ -12,7 +12,7 @@ import {
   // ShieldAlert,
   // ShoppingBasket,
   SquareTerminal,
-  // Wrench,
+  Wrench,
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -56,6 +56,13 @@ const data = {
       icon: Bot,
       isActive: true,
       items: [{ title: "Library", url: "/agents" }],
+    },
+    {
+      title: "Tools",
+      url: "/tools",
+      icon: Wrench,
+      isActive: true,
+      items: [{ title: "Tools", url: "/tools" }],
     },
     {
       title: "Settings",
