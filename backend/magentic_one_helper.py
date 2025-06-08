@@ -33,6 +33,7 @@ from llm_config import get_llm_config, build_chat_client
 from magentic_one_custom_agent import MagenticOneCustomAgent
 from magentic_one_custom_rag_agent import MagenticOneRAGAgent
 from magentic_one_custom_mcp_agent import MagenticOneCustomMCPAgent
+from magentic_one_tools_agent import MagenticOneToolsAgent
 
 azure_credential = DefaultAzureCredential()
 token_provider = get_bearer_token_provider(
@@ -343,6 +344,18 @@ class MagenticOneHelper:
                 file_surfer._browser.set_path(os.path.join(os.getcwd(), "data"))  # Set the path to the data folder in the current working directory
                 agent_list.append(_wrap_with_proxy(file_surfer))
                 print("FileSurfer added!")
+
+            # Tools agent with function-calling utilities
+            elif agent["type"] == "Tools":
+                tools_client = build_chat_client(agent_name=agent["name"], agent_type="Tools")
+                tools_agent = MagenticOneToolsAgent(
+                    agent["name"],
+                    model_client=tools_client,
+                    system_message=agent.get("system_message", ""),
+                    description=agent.get("description", ""),
+                )
+                agent_list.append(_wrap_with_proxy(tools_agent))
+                print(f'{agent["name"]} (tools) added!')
             
             # This is custom agent - simple SYSTEM message and DESCRIPTION is used inherited from AssistantAgent
             elif (agent["type"] == "Custom"):
@@ -455,6 +468,14 @@ if __name__ == "__main__":
             "system_message":"",
             "description":"",
             "icon":"🏄‍♂️"
+            },
+            {
+            "input_key":"0005",
+            "type":"Tools",
+            "name":"ToolsAgent",
+            "system_message":"",
+            "description":"",
+            "icon":"🛠️"
             },
             ]
     

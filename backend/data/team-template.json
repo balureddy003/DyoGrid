@@ -40,9 +40,18 @@
             "description": "",
             "icon": "🏄‍♂️",
             "index_name": ""
+        },
+        {
+            "input_key": "0005",
+            "type": "Tools",
+            "name": "ToolsAgent",
+            "system_message": "",
+            "description": "",
+            "icon": "🛠",
+            "index_name": ""
         }
     ],
-    "description": "Original MagenticOne Team. Includes Coder, Executor, FileSurfer and WebSurfer.",
+    "description": "Original MagenticOne Team. Includes Coder, Executor, FileSurfer, WebSurfer and ToolsAgent.",
     "starting_tasks": [
         {
             "id": "task-1",

@@ -77,6 +77,14 @@ MAGENTIC_ONE_DEFAULT_AGENTS = [
             "description":"",
             "icon":"🏄‍♂️"
             },
+            {
+            "input_key":"0005",
+            "type":"Tools",
+            "name":"ToolsAgent",
+            "system_message":"",
+            "description":"",
+            "icon":"🛠️"
+            },
             ]
 
 # Lifespan handler for startup/shutdown events
