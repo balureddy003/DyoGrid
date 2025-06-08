@@ -674,8 +674,9 @@ async def run_bench(payload: dict):
         from autogenbench.run_cmd import run_scenarios
         from autogen import config_list_from_json
 
-        env_name = config_path if config_path else "OAI_CONFIG_LIST"
-        config_list = config_list_from_json(env_or_file=env_name)
+        if not config_path:
+            config_path = os.getenv("OAI_CONFIG_LIST", "local-llm/config_list.json")
+        config_list = config_list_from_json(env_or_file=config_path)
         run_scenarios(
             scenario=scenario,
             n_repeats=repeats,

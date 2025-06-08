@@ -79,8 +79,11 @@ pip install -r requirements.txt
 
 ### setup ollama
 
-###
-litellm --config litellm.config.json
+Run the LiteLLM proxy pointing to your local Ollama service:
+
+```bash
+litellm --config local-llm/litellm.config.yaml
+```
 
 ### setup mongodb
 
@@ -127,3 +130,26 @@ export LITELLM_ALWAYS_ENABLE_TOOLS=true
 
 We welcome contributions from the community! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our process and guidelines.
 
+
+### Use local Ollama with LiteLLM
+
+1. Start the Ollama service (models should be pulled first):
+
+```bash
+ollama serve &
+```
+
+2. Launch the LiteLLM proxy so the backend can access the models via an OpenAI-compatible API:
+
+```bash
+litellm --config local-llm/litellm.config.yaml
+```
+
+3. Set environment variables to enable Ollama in the backend:
+
+```bash
+export LLM_PROVIDER=ollama
+export LITELLM_BASE_URL=http://localhost:4000/v1
+```
+
+Optionally adjust `AGENT_MODEL_MAP` to choose which model each agent uses.
