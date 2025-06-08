@@ -20,6 +20,14 @@ from autogen_agentchat.base import TaskResult
 from magentic_one_helper import generate_session_name
 import aisearch
 import logging
+from tools import (
+    bing_search,
+    google_search,
+    fetch_webpage,
+    generate_image,
+    generate_pdf,
+    calculator,
+)
 
 from datetime import datetime 
 from schemas import AutoGenMessage
@@ -570,3 +578,61 @@ async def initialize_teams_api():
         return {"status": "success", "message": msg}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error initializing teams: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# Tool Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/tools/calculator")
+async def calculator_tool_endpoint(payload: dict):
+    try:
+        result = calculator(payload.get("a"), payload.get("b"), payload.get("operator", "+"))
+        return {"result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/tools/google_search")
+async def google_search_tool_endpoint(payload: dict):
+    try:
+        results = await google_search(**payload)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/tools/bing_search")
+async def bing_search_tool_endpoint(payload: dict):
+    try:
+        results = await bing_search(**payload)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/tools/fetch_webpage")
+async def fetch_webpage_tool_endpoint(payload: dict):
+    try:
+        content = await fetch_webpage(**payload)
+        return {"content": content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/tools/generate_image")
+async def generate_image_tool_endpoint(payload: dict):
+    try:
+        paths = await generate_image(**payload)
+        return {"paths": paths}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/tools/generate_pdf")
+async def generate_pdf_tool_endpoint(payload: dict):
+    try:
+        path = await generate_pdf(**payload)
+        return {"path": path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

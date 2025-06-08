@@ -7,6 +7,7 @@ import PlaygroundHistory from './pages/Playground-history'
 import Introduction from './pages/Introduction'
 import GetStarted from './pages/GetStarted'
 import GeneralSettings from './pages/GeneralSettings'
+import Tools from './pages/Tools'
 import './index.css'
 import { UserProvider, UserContext, getUserInfo } from './contexts/UserContext'
 import { TeamsProvider } from './contexts/TeamsContext'
@@ -36,6 +37,7 @@ function App() {
       <Route path="/introduction" element={<Introduction />} />
       <Route path="/get-started" element={<GetStarted />} />
       <Route path="/general" element={<GeneralSettings />} />
+      <Route path="/tools" element={<Tools />} />
     </Routes>
   );
 }
