@@ -41,8 +41,6 @@ class MagenticOneRAGAgent(AssistantAgent):
         index_name: str,
         faiss_documents: list[str] | None = None,
         faiss_index_path: str | None = None,
-        faiss_documents: list[str] | None = None,
-        faiss_index_path: str | None = None,
         # AZURE_SEARCH_ADMIN_KEY: str = None,
         description: str = MAGENTIC_ONE_RAG_DESCRIPTION,
 
