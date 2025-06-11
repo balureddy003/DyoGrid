@@ -1,4 +1,4 @@
-# Azure Container Apps remote MCP server example
+# remote MCP server example
 
 This MCP server uses SSE transport and is authenticated with an API key.
 
