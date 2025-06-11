@@ -6,8 +6,6 @@ from mcp.server.fastmcp import FastMCP
 # Initialize FastMCP server
 mcp = FastMCP("ag-general")
 import logging
-from azure.communication.email import EmailClient
-from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
@@ -36,11 +34,15 @@ def mailer(
         str: Result of the send operation or error message.
     """
     logger = logging.getLogger("mailer")
-    endpoint = os.environ.get("AZURE_COMMUNICATION_EMAIL_ENDPOINT")
-    sender_address = os.environ.get("AZURE_COMMUNICATION_EMAIL_SENDER")
+
+    smtp_host = os.environ.get("SMTP_HOST", "localhost")
+    smtp_port = int(os.environ.get("SMTP_PORT", "25"))
+    smtp_user = os.environ.get("SMTP_USER")
+    smtp_password = os.environ.get("SMTP_PASSWORD")
+    sender_address = os.environ.get("SMTP_SENDER", "noreply@example.com")
 
     logger.info("Mailer tool started.")
-    logger.info(f"Endpoint: {endpoint}")
+    logger.info(f"SMTP host: {smtp_host}:{smtp_port}")
     logger.info(f"Sender address: {sender_address}")
     logger.info(f"Recipient address: {to_address}")
     logger.info(f"Subject: {subject}")  
@@ -48,42 +50,31 @@ def mailer(
     logger.info(f"HTML content: {html_content}")
     logger.info(f"Environment variables: {os.environ}")
 
-    if not endpoint:
-        logger.error("AZURE_COMMUNICATION_EMAIL_ENDPOINT environment variable is not set.")
-        return "Email endpoint is not configured."
-    if not sender_address:
-        logger.error("AZURE_COMMUNICATION_EMAIL_SENDER environment variable is not set.")
-        return "Sender address is not configured."
-
     if not to_address:
-        to_address = os.environ.get("AZURE_COMMUNICATION_EMAIL_RECIPIENT_DEFAULT")
-        logger.warning("No recipient address provided. Using default")
+        logger.error("No recipient address provided")
+        return "Recipient address is required"
     if not subject:
-        subject = os.environ.get("AZURE_COMMUNICATION_EMAIL_SUBJECT_DEFAULT")
+        subject = "Message from local agent"
+
     logger.info(f"Sending email to {to_address}...")
     try:
-        client = EmailClient(endpoint, DefaultAzureCredential())
-        message = {
-            "senderAddress": sender_address,
-            "recipients": {
-                "to": [{"address": to_address}]
-            },
-            "content": {
-                "subject": subject,
-                "plainText": plain_text,
-                "html": html_content or f"<html><body><pre>{plain_text}</pre></body></html>"
-            },
-        }
-        _ = client.begin_send(message)
-        logger.info(f"Email sent.")
-        # result = poller.result(timeout=30)
-        # return f"Email sent. \n\nTERMINATE."
+        import smtplib
+        from email.mime.text import MIMEText
+
+        msg = MIMEText(plain_text, "plain")
+        msg["Subject"] = subject
+        msg["From"] = sender_address
+        msg["To"] = to_address
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            if smtp_user and smtp_password:
+                server.login(smtp_user, smtp_password)
+            server.sendmail(sender_address, [to_address], msg.as_string())
+        logger.info("Email sent.")
+        return "Email sent. \n\nTERMINATE."
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
         return f"Failed to send email: {e} \n\nTERMINATE."
-    finally:
-        logger.info("Mailer tool finished execution.")
-        return f"Email sent2. \n\nTERMINATE."
 
 @mcp.tool(description="Fetch table data by name")
 def data_provider(tablename: str) -> str:
