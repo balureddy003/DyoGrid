@@ -13,12 +13,8 @@ from llm_config import build_embedding_client, get_llm_provider, LITELLM_EMBED_M
 
 RAG_BACKEND = os.getenv("RAG_BACKEND", "faiss").lower()
 
-'''
-Please provide the following environment variables in your .env file if you want to enable Azure Search:
-AZURE_SEARCH_SERVICE_ENDPOINT=""
-AZURE_SEARCH_ADMIN_KEY=""
-Local FAISS vector search is supported by default.
-'''
+
+
 MAGENTIC_ONE_RAG_DESCRIPTION = "An agent that has access to internal index and can handle RAG tasks, call this agent if you are getting questions on your internal index"
 
 MAGENTIC_ONE_RAG_SYSTEM_MESSAGE = """
@@ -41,7 +37,6 @@ class MagenticOneRAGAgent(AssistantAgent):
         index_name: str,
         faiss_documents: list[str] | None = None,
         faiss_index_path: str | None = None,
-        # AZURE_SEARCH_ADMIN_KEY: str = None,
         description: str = MAGENTIC_ONE_RAG_DESCRIPTION,
 
     ):
