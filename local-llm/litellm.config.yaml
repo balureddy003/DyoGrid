@@ -9,7 +9,9 @@ model_list:
       function_calling: true
       json_output: true
       structured_output: true
-
+      timeout: 600000
+      max_batch_size: 1
+      max_concurrent_requests: 1
   - model_name: ollama/deepseek-coder:6.7b
     litellm_params:
       provider: ollama
@@ -20,6 +22,9 @@ model_list:
       function_calling: true
       json_output: true
       structured_output: true
+      timeout: 600000
+      max_batch_size: 1
+      max_concurrent_requests: 1
 
   - model_name: ollama/nomic-embed-text
     litellm_params:
@@ -28,7 +33,7 @@ model_list:
       model: ollama/nomic-embed-text
       api_base: http://localhost:11434
       api_key: sk-no-key-needed
-      timeout: 600
+      timeout: 600000
 
 litellm_settings:
   drop_params: true
