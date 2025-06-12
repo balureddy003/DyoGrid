@@ -26,6 +26,7 @@ dependencies = [
     "azure-cosmos==4.9.0",
     "fastmcp==2.1.2",
     "mcp==1.6.0",
+    "mcp-contextforge-gateway>=0.1.0",
     "azure-communication-email==1.0.0",
     "pymongo",
     "litellm==1.40.6",

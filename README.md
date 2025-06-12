@@ -121,6 +121,26 @@ export AGENT_MODEL_MAP="Coder:ollama/deepseek-coder:6.7b,WebSurfer:ollama/llama3
 export LITELLM_ALWAYS_ENABLE_TOOLS=true
 ```
 
+## MCP Gateway Integration
+
+The repository includes a helper script using
+[mcp-context-forge](https://github.com/IBM/mcp-context-forge) to expose
+enterprise systems as MCP tools. Provide your SAP and Salesforce endpoints
+via environment variables and run the gateway:
+
+```bash
+export SAP_BASE_URL="https://sap.example.com/api"
+export SALESFORCE_BASE_URL="https://salesforce.example.com/api"
+# optional: customise UI login credentials
+export BASIC_AUTH_USER=admin
+export BASIC_AUTH_PASSWORD=changeme
+# start the gateway with its admin UI
+python backend/connectors/mcp_gateway.py
+```
+
+Agents can now invoke `sap_api` or `salesforce_api` through this gateway. Open
+`http://localhost:4444/admin` to manage connectors using the MCP Gateway UI.
+
 
 ## 🤝 Contributing
 
