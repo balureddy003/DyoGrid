@@ -21,8 +21,16 @@ def _load_agent_model_map() -> dict:
     return mapping
 
 def get_llm_provider():
-    provider = os.getenv("LLM_PROVIDER", "azure")
-    return provider.lower()
+    """Return the configured LLM provider.
+
+    Only the ``ollama`` provider is supported in this refactored version. The
+    environment variable ``LLM_PROVIDER`` may still be used but any value other
+    than ``ollama`` will raise an error.``"""  # updated docstring
+
+    provider = os.getenv("LLM_PROVIDER", "ollama").lower()
+    if provider != "ollama":
+        raise ValueError("Only the 'ollama' provider is supported for local LLMs")
+    return provider
 
 def get_llm_config(agent_name: str | None = None, agent_type: str | None = None):
     provider = get_llm_provider()
@@ -37,16 +45,7 @@ def get_llm_config(agent_name: str | None = None, agent_type: str | None = None)
     elif lookup_type and lookup_type in model_map:
         model = model_map[lookup_type]
 
-    if provider == "azure":
-        return {
-            "provider": "azure",
-            "model": model or os.getenv("AZURE_OPENAI_MODEL", "gpt-35-turbo"),
-            "base_url": os.getenv("AZURE_OPENAI_ENDPOINT"),
-            "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
-            "api_version": os.getenv("AZURE_OPENAI_API_VERSION", "2023-05-15"),
-            "timeout": timeout,
-        }
-    elif provider == "ollama":
+    if provider == "ollama":
         # Decide chat vs tool model
         default_chat = LITELLM_CHAT_MODEL
         default_tool = LITELLM_TOOL_MODEL
@@ -75,49 +74,28 @@ def get_llm_config(agent_name: str | None = None, agent_type: str | None = None)
 
 
 def build_chat_client(agent_name: str | None = None, agent_type: str | None = None):
-    """Helper to create a ChatCompletionClient based on agent info."""
-    from autogen_ext.models.openai import (
-        AzureOpenAIChatCompletionClient,
-        OpenAIChatCompletionClient,
-    )
+    """Create a chat completion client for the local LLM provider."""
+    from autogen_ext.models.openai import OpenAIChatCompletionClient
 
     cfg = get_llm_config(agent_name=agent_name, agent_type=agent_type).copy()
     timeout = cfg.pop("timeout", 60)
-    provider = cfg.pop("provider", "openai").lower()
+    cfg.pop("provider", None)
 
     # Filter out unsupported args for the client constructor
     cfg.pop("stream", None)
 
-    if provider == "azure":
-        return AzureOpenAIChatCompletionClient(timeout=timeout, **cfg)
-    else:
-        return OpenAIChatCompletionClient(timeout=timeout, **cfg)
+    return OpenAIChatCompletionClient(timeout=timeout, **cfg)
 
 
 def build_embedding_client():
-    """Create an OpenAI/AzureOpenAI client for embeddings based on env config."""
-    from openai import AzureOpenAI, OpenAI
-    from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+    """Create an OpenAI client for embeddings using the local provider."""
+    from openai import OpenAI
 
-    provider = get_llm_provider()
     timeout = int(os.getenv("OPENAI_TIMEOUT", 60))
 
-    if provider == "azure":
-        credential = DefaultAzureCredential()
-        token_provider = get_bearer_token_provider(
-            credential, "https://cognitiveservices.azure.com/.default"
-        )
-        return AzureOpenAI(
-            api_version="2024-12-01-preview",
-            azure_ad_token_provider=token_provider,
-            timeout=timeout,
-        )
-    elif provider == "ollama":
-        return OpenAI(
-            base_url=os.getenv("LITELLM_BASE_URL", "http://localhost:4000/v1"),
-            api_key=os.getenv("LITELLM_API_KEY", "sk-no-key-needed"),
-            timeout=timeout,
-        )
-    else:
-        raise ValueError(f"Unsupported provider: {provider}")
+    return OpenAI(
+        base_url=os.getenv("LITELLM_BASE_URL", "http://localhost:4000/v1"),
+        api_key=os.getenv("LITELLM_API_KEY", "sk-no-key-needed"),
+        timeout=timeout,
+    )
 

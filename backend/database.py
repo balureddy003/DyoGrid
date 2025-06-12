@@ -1,8 +1,7 @@
 import os, glob, json, uuid
 from typing import Optional, Dict, Union, List
 from pymongo import MongoClient
-from azure.cosmos import CosmosClient, PartitionKey
-from azure.identity import DefaultAzureCredential
+
 from dotenv import load_dotenv
 from bson import ObjectId
 import time

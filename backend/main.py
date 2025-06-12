@@ -2,8 +2,7 @@
 from fastapi import FastAPI, Depends, UploadFile, HTTPException, Query, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2AuthorizationCodeBearer
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from azure.storage.blob import BlobServiceClient
+
 # from sqlalchemy.orm import Session
 import schemas, crud
 from database import CosmosDB
@@ -297,12 +296,7 @@ async def display_log_message(log_entry, logs_dir, session_id, user_id, conversa
 
 
 
-# Azure Services Setup (Mocked for example)
-blob_service_client = BlobServiceClient.from_connection_string(
-    "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;" + \
-    "AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;" + \
-    "BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
-)
+
 
 # Chat Endpoint
 @app.post("/chat")

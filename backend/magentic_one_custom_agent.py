@@ -1,17 +1,13 @@
 from autogen_agentchat.agents import AssistantAgent
 from autogen_core.models import ChatCompletionClient
 from llm_config import get_llm_config, build_chat_client
-from autogen_ext.models.openai import (
-    AzureOpenAIChatCompletionClient,
-    OpenAIChatCompletionClient,
-)
-import os
+
 
 
 def _build_llm_client(agent_name: str):
     """
     Create a ChatCompletionClient from the dict returned by get_llm_config().
-    Supports 'azure' and 'openai' (incl. LiteLLM/Ollama proxy) providers.
+    Supports  LiteLLM/Ollama proxy providers.
     """
     return build_chat_client(agent_name=agent_name, agent_type="Custom")
 
