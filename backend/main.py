@@ -38,6 +38,9 @@ logging.getLogger("pymongo").setLevel(logging.WARNING)
 print("Starting the server...")
 load_dotenv()
 DEBUG_AGENT_LOGS = os.getenv("DEBUG_AGENT_LOGS", "false").lower() == "true"
+
+from connectors.mcp_gateway import register_connectors
+from mcpgateway.main import app as mcp_gateway_app
 # Configure root logging level based on DEBUG_AGENT_LOGS
 # We'll adjust in lifespan.
 #print(f'AZURE_OPENAI_ENDPOINT:{os.getenv("AZURE_OPENAI_ENDPOINT")}')
@@ -92,12 +95,18 @@ async def lifespan(app: FastAPI):
     if DEBUG_AGENT_LOGS:
         logging.debug("DEBUG_AGENT_LOGS enabled")
     print("Database initialized.")
+    try:
+        await register_connectors()
+        logging.info("MCP connectors registered")
+    except Exception as exc:
+        logging.warning("Failed to register MCP connectors: %s", exc)
     yield
     # Shutdown code (optional)
     # Cleanup database connection
     app.state.db = None
 
 app = FastAPI(lifespan=lifespan)
+app.mount("/mcp", mcp_gateway_app)
 
 # Allow all origins
 app.add_middleware(
