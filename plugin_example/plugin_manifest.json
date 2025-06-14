@@ -1,0 +1,11 @@
+{
+  "name": "inventory_plugin",
+  "version": "0.1.0",
+  "description": "Provides inventory lookup capabilities.",
+  "entrypoint": "fetch_inventory.py",
+  "tags": ["erp", "inventory"],
+  "dependencies": [],
+  "inputs": {"item_ids": "List[str]"},
+  "outputs": {"inventory": "dict"}
+}
+
