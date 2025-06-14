@@ -114,6 +114,8 @@ async def redirect_double_paths(request: Request, call_next):
         return RedirectResponse(url="/mcp/admin")
     if request.url.path == "/mcp/mcp":
         return RedirectResponse(url="/mcp")
+    if request.url.path == "/mcp/-admin":
+        return RedirectResponse(url="/mcp")
     return await call_next(request)
 
 # Redirect common admin paths to the mounted MCP gateway
