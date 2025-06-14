@@ -139,8 +139,10 @@ uvicorn backend.main:app --reload
 
 Agents can now invoke `sap_api` or `salesforce_api` through this gateway. Open
 `http://localhost:8000/mcp/admin` to manage connectors using the MCP Gateway UI
-or navigate to `/mcp-admin` in the frontend when running locally. If you prefer
-a separate process, run `python backend/connectors/mcp_gateway.py` instead.
+or navigate to `/mcp-admin` in the frontend when running locally. The backend
+also redirects `/admin` and `/mcp-admin` to this interface for convenience. If
+you prefer a separate process, run `python backend/connectors/mcp_gateway.py`
+instead.
 
 The frontend expects a `VITE_MCP_GATEWAY_URL` environment variable (see
 `frontend/.env.example`) pointing at your gateway instance, typically

@@ -10,7 +10,7 @@ import os
 import uuid
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
-from fastapi.responses import StreamingResponse, Response
+from fastapi.responses import StreamingResponse, Response, RedirectResponse
 import json, asyncio
 from magentic_one_helper import MagenticOneHelper
 from llm_config import get_llm_config
@@ -107,6 +107,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.mount("/mcp", mcp_gateway_app)
+
+# Redirect common admin paths to the mounted MCP gateway
+@app.get("/admin", include_in_schema=False)
+async def redirect_root_admin():
+    return RedirectResponse(url="/mcp/admin")
+
+@app.get("/mcp-admin", include_in_schema=False)
+async def redirect_mcp_admin():
+    return RedirectResponse(url="/mcp/admin")
 
 # Allow all origins
 app.add_middleware(
