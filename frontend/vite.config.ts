@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_MCP_GATEWAY_URL || "http://localhost:8000/mcp",
           changeOrigin: false,
           secure: false,
+          rewrite: (p) => p.replace(/^\/mcp/, ""),
         },
       },
     },
