@@ -139,10 +139,11 @@ uvicorn backend.main:app --reload
 
 Agents can now invoke `sap_api` or `salesforce_api` through this gateway. Open
 `http://localhost:8000/mcp/admin` to manage connectors using the MCP Gateway UI
-
-`http://localhost:8000/mcp` when running the backend locally. When you run
-`npm run dev`, Vite proxies any `/mcp` requests to this URL, so keep the `/mcp`
-prefix in place.
+404 page. If you accidentally browse to `/mcp/mcp-admin` or `/mcp/-admin`,
+you'll be redirected back to the correct location as well. If you prefer a
+separate process, run
+`npm run dev`, Vite proxies any `/mcp` requests to this URL while leaving the
+`/mcp-admin` path untouched, so keep the `/mcp` prefix in place.
 The frontend expects a `VITE_MCP_GATEWAY_URL` environment variable (see
 `frontend/.env.example`) pointing at your gateway instance, typically
 `http://localhost:8000/mcp` when running the backend locally.

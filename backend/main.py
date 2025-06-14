@@ -110,7 +110,7 @@ app.mount("/mcp", mcp_gateway_app)
 
 @app.middleware("http")
 async def redirect_double_paths(request: Request, call_next):
-    if request.url.path == "/mcp/mcp-admin":
+    if request.url.path in {"/mcp/mcp-admin", "/mcp/-admin"}:
         return RedirectResponse(url="/mcp/admin")
     if request.url.path == "/mcp/mcp":
         return RedirectResponse(url="/mcp")
