@@ -64,15 +64,5 @@
     "typescript-eslint": "^8.18.2",
     "vite": "^6.3.5"
   },
-  "vite": {
-    "server": {
-      "proxy": {
-        "/chat": {
-          "target": "http://localhost:8000",
-          "changeOrigin": false,
-          "secure": false
-        }
-      }
-    }
-  }
+  "vite": {}
 }
