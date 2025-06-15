@@ -31,7 +31,9 @@ The `mcp/` directory contains an example remote MCP server using FastAPI and SSE
 
 DyoGrid also ships a lightweight integration with
 [mcp-context-forge](https://github.com/IBM/mcp-context-forge). The helper
-script at `backend/connectors/mcp_gateway.py` starts an MCP Gateway and
-registers REST connectors for SAP and Salesforce based on environment
-variables. The gateway exposes an admin UI at `http://localhost:4444/admin`
-for managing registered connectors and servers.
+script at `backend/connectors/mcp_gateway.py` registers REST connectors for
+SAP and Salesforce based on environment variables. The backend mounts the
+resulting MCP Gateway under `/mcp`, so its admin UI is reachable at
+`http://localhost:8000/mcp/admin` and also via `/mcp-admin` when running the
+frontend locally. All `/admin` or `/mcp-admin` paths are redirected to
+`/mcp/admin` so the UI works even when users enter the wrong URL.
