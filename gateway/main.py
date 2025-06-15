@@ -1,12 +1,4 @@
-"""Example MCP Gateway setup with SAP and Salesforce connectors.
 
-This file shows how to programmatically register connectors using the
-``mcp-contextforge-gateway`` package. The ``gateway`` directory is a Python
-project that declares this dependency. Typically you'll install it with
-``uv pip install -e .`` and run ``mcpgateway.wrapper`` (see ``gateway/README.md``).
-Running this module directly will also start the gateway with its admin UI at
-``http://localhost:4444/admin``.
-"""
 
 import os
 import asyncio

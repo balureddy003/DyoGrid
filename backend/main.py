@@ -98,6 +98,25 @@ async def lifespan(app: FastAPI):
     app.state.db = None
 
 app = FastAPI(lifespan=lifespan)
+    return RedirectResponse(url=target, status_code=307)
+
+    if request.url.path == "/mcp/mcp-admin":
+        return RedirectResponse(url="/mcp/admin")
+    if request.url.path == "/mcp/mcp":
+        return RedirectResponse(url="/mcp")
+    if request.url.path == "/mcp/-admin":
+        return RedirectResponse(url="/mcp")
+    return await call_next(request)
+
+# Redirect common admin paths to the mounted MCP gateway
+@app.get("/admin", include_in_schema=False)
+async def redirect_root_admin():
+    return RedirectResponse(url="/mcp/admin")
+
+@app.get("/mcp-admin", include_in_schema=False)
+async def redirect_mcp_admin():
+    return RedirectResponse(url="/mcp/admin")
+
 
 # Allow all origins
 app.add_middleware(
@@ -667,6 +686,51 @@ async def run_bench(payload: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/bench/run_team")
+async def run_bench_team(payload: dict):
+    """Run AutoGenBench for a specific team and store results."""
+    try:
+        team_id = payload.get("team_id")
+        scenario = payload.get("scenario")
+        repeats = int(payload.get("repeats", 1))
+        config_path = payload.get("config")
+        results_dir = payload.get("results_dir", "bench_results")
+        subsample = payload.get("subsample")
+
+        from autogenbench.run_cmd import run_scenarios
+        from autogen import config_list_from_json
+        import io, contextlib
+        from autogenbench.tabulate_cmd import default_tabulate
+
+        config_list = config_list_from_json(env_or_file=config_path)
+        run_scenarios(
+            scenario=scenario,
+            n_repeats=repeats,
+            is_native=True,
+            config_list=config_list,
+            requirements=None,
+            results_dir=results_dir,
+            subsample=float(subsample) if subsample is not None else None,
+        )
+
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            default_tabulate(["bench", results_dir, "--csv"])
+        csv = buffer.getvalue()
+
+        app.state.db.store_bench_result({
+            "team_id": team_id,
+            "scenario": scenario,
+            "results_dir": results_dir,
+            "csv": csv,
+            "timestamp": time.time(),
+        })
+
+        return {"status": "completed", "results_dir": results_dir, "csv": csv}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/bench/results")
 async def bench_results(results_dir: str = Query("bench_results")):
     """Return tabulated benchmark results."""
@@ -678,5 +742,15 @@ async def bench_results(results_dir: str = Query("bench_results")):
         with contextlib.redirect_stdout(buffer):
             default_tabulate(["bench", results_dir, "--csv"])
         return {"csv": buffer.getvalue()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/bench/team/{team_id}")
+async def bench_results_team(team_id: str):
+    """Fetch stored benchmark results for a team."""
+    try:
+        results = app.state.db.get_bench_results(team_id)
+        return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

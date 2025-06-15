@@ -143,16 +143,6 @@ export SALESFORCE_BASE_URL="https://salesforce.example.com/api"
 # optional: customise UI login credentials
 export BASIC_AUTH_USER=admin
 export BASIC_AUTH_PASSWORD=changeme
-MCP_AUTH_TOKEN=${MCPGATEWAY_BEARER_TOKEN} \
-MCP_SERVER_CATALOG_URLS=http://localhost:4444/servers/1 \
-uv run --directory . -m mcpgateway.wrapper
-```
 
-Agents can now invoke `sap_api` or `salesforce_api` through this gateway. Open
+
 `http://localhost:4444/admin` to manage connectors using the MCP Gateway UI.
-
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our process and guidelines.
-
