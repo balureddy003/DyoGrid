@@ -126,29 +126,16 @@ export LITELLM_ALWAYS_ENABLE_TOOLS=true
 The repository includes a helper script using
 [mcp-context-forge](https://github.com/IBM/mcp-context-forge) to expose
 enterprise systems as MCP tools. Provide your SAP and Salesforce endpoints
-via environment variables. The backend automatically mounts the gateway under
-`/mcp` when it starts, so no extra process is required:
+via environment variables and run the gateway:
 
 ```bash
 export SAP_BASE_URL="https://sap.example.com/api"
 export SALESFORCE_BASE_URL="https://salesforce.example.com/api"
+# optional: customise UI login credentials
 export BASIC_AUTH_USER=admin
 export BASIC_AUTH_PASSWORD=changeme
-uvicorn backend.main:app --reload
+# start the gateway with its admin UI
+python gateway/main.py
 ```
 
-Agents can now invoke `sap_api` or `salesforce_api` through this gateway. Open
-`http://localhost:8000/mcp/admin` to manage connectors using the MCP Gateway UI
-
-`http://localhost:8000/mcp` when running the backend locally. When you run
-`npm run dev`, Vite proxies any `/mcp` requests to this URL, so keep the `/mcp`
-prefix in place.
-The frontend expects a `VITE_MCP_GATEWAY_URL` environment variable (see
-`frontend/.env.example`) pointing at your gateway instance, typically
-`http://localhost:8000/mcp` when running the backend locally.
-
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our process and guidelines.
-
+`http://localhost:4444/admin` to manage connectors using the MCP Gateway UI.

@@ -1,5 +1,5 @@
 # File: main.py
-from fastapi import FastAPI, Depends, UploadFile, HTTPException, Query, File, Form, Request
+from fastapi import FastAPI, Depends, UploadFile, HTTPException, Query, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2AuthorizationCodeBearer
 
@@ -10,7 +10,7 @@ import os
 import uuid
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
-from fastapi.responses import StreamingResponse, Response, RedirectResponse
+from fastapi.responses import StreamingResponse, Response
 import json, asyncio
 from magentic_one_helper import MagenticOneHelper
 from llm_config import get_llm_config
@@ -38,9 +38,6 @@ logging.getLogger("pymongo").setLevel(logging.WARNING)
 print("Starting the server...")
 load_dotenv()
 DEBUG_AGENT_LOGS = os.getenv("DEBUG_AGENT_LOGS", "false").lower() == "true"
-
-from connectors.mcp_gateway import register_connectors
-from mcpgateway.main import app as mcp_gateway_app
 # Configure root logging level based on DEBUG_AGENT_LOGS
 # We'll adjust in lifespan.
 #print(f'AZURE_OPENAI_ENDPOINT:{os.getenv("AZURE_OPENAI_ENDPOINT")}')
@@ -95,21 +92,14 @@ async def lifespan(app: FastAPI):
     if DEBUG_AGENT_LOGS:
         logging.debug("DEBUG_AGENT_LOGS enabled")
     print("Database initialized.")
-    try:
-        await register_connectors()
-        logging.info("MCP connectors registered")
-    except Exception as exc:
-        logging.warning("Failed to register MCP connectors: %s", exc)
     yield
     # Shutdown code (optional)
     # Cleanup database connection
     app.state.db = None
 
 app = FastAPI(lifespan=lifespan)
-app.mount("/mcp", mcp_gateway_app)
+    return RedirectResponse(url=target, status_code=307)
 
-@app.middleware("http")
-async def redirect_double_paths(request: Request, call_next):
     if request.url.path == "/mcp/mcp-admin":
         return RedirectResponse(url="/mcp/admin")
     if request.url.path == "/mcp/mcp":
@@ -126,6 +116,7 @@ async def redirect_root_admin():
 @app.get("/mcp-admin", include_in_schema=False)
 async def redirect_mcp_admin():
     return RedirectResponse(url="/mcp/admin")
+
 
 # Allow all origins
 app.add_middleware(
