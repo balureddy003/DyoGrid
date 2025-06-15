@@ -65,13 +65,6 @@ const data = {
       items: [{ title: "Tools", url: "/tools" }],
     },
     {
-      title: "MCP Gateway",
-      url: "/mcp-admin",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [{ title: "Admin", url: "/mcp-admin" }],
-    },
-    {
       title: "Bench",
       url: "/bench",
       icon: Frame,
