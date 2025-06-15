@@ -123,19 +123,28 @@ export LITELLM_ALWAYS_ENABLE_TOOLS=true
 
 ## MCP Gateway Integration
 
-The repository includes a helper script using
-[mcp-context-forge](https://github.com/IBM/mcp-context-forge) to expose
-enterprise systems as MCP tools. Provide your SAP and Salesforce endpoints
-via environment variables and run the gateway:
+DyoGrid can expose enterprise systems as MCP tools using the
+[mcp-contextforge-gateway](https://github.com/IBM/mcp-context-forge) package.
+Install it with [`uv`](https://github.com/astral-sh/uv) and run the provided
+wrapper:
 
 ```bash
+# 1 · Install uv (uvenv is an alias it provides)
+curl -Ls https://astral.sh/uv/install.sh | sh   # or: pipx install uv
+
+# 2 · Create an on-the-spot venv & run the wrapper
+uv venv ~/.venv/mcpgateway
+source ~/.venv/mcpgateway/bin/activate
+uv pip install mcp-contextforge-gateway
+
 export SAP_BASE_URL="https://sap.example.com/api"
 export SALESFORCE_BASE_URL="https://salesforce.example.com/api"
 # optional: customise UI login credentials
 export BASIC_AUTH_USER=admin
 export BASIC_AUTH_PASSWORD=changeme
-# start the gateway with its admin UI
-python gateway/main.py
+MCP_AUTH_TOKEN=${MCPGATEWAY_BEARER_TOKEN} \
+MCP_SERVER_CATALOG_URLS=http://localhost:4444/servers/1 \
+uv run --directory . -m mcpgateway.wrapper
 ```
 
 `http://localhost:4444/admin` to manage connectors using the MCP Gateway UI.

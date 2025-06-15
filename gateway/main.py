@@ -1,7 +1,10 @@
 """Example MCP Gateway setup with SAP and Salesforce connectors.
 
-Running this module registers the connectors and starts the MCP Gateway
-including its built-in Admin UI (http://localhost:4444/admin by default).
+This file shows how to programmatically register connectors using the
+``mcp-contextforge-gateway`` package. In most cases you should install the
+package with ``uv`` and run ``mcpgateway.wrapper`` (see ``gateway/README.md``).
+Running this module directly will also start the gateway with its admin UI at
+``http://localhost:4444/admin``.
 """
 
 import os
