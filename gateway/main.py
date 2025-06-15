@@ -1,8 +1,4 @@
-"""Example MCP Gateway setup with SAP and Salesforce connectors.
 
-Running this module registers the connectors and starts the MCP Gateway
-including its built-in Admin UI (http://localhost:4444/admin by default).
-"""
 
 import os
 import asyncio
