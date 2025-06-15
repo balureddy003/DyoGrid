@@ -23,9 +23,12 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_MCP_GATEWAY_URL || "http://localhost:8000/mcp",
           changeOrigin: false,
           secure: false,
-          // Only strip the prefix when another segment follows so
+
           // /mcp-admin stays intact.
           rewrite: (p) => p.replace(/^\/mcp(?=\/)/, ""),
+
+          rewrite: (p) => p.replace(/^\/mcp/, ""),
+
         },
       },
     },

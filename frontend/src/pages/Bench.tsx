@@ -45,13 +45,16 @@ export default function Bench() {
   const runBench = async () => {
     try {
       setRunning(true);
-      await axios.post(`${BASE_URL}/bench/run`, {
+      await axios.post(`${BASE_URL}/bench/run_team`, {
+        team_id: selectedTeam.team_id,
         scenario: "scenarios/basic.jsonl",
         config: "OAI_CONFIG_LIST.json",
         repeats: 1
       });
-      const res = await axios.get(`${BASE_URL}/bench/results`);
-      setOutput(res.data.csv);
+      const res = await axios.get(`${BASE_URL}/bench/team/${selectedTeam.team_id}`);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setOutput(res.data[0].csv);
+      }
     } catch (err) {
       console.error(err);
     } finally {
