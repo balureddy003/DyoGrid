@@ -1,0 +1,13 @@
+[project]
+name = "dyogrid-gateway"
+version = "0.1.0"
+description = "Sample MCP Gateway service"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp-contextforge-gateway>=0.1.0",
+]
+
+[project.scripts]
+dyogrid-gateway = "mcpgateway.wrapper:main"
+
