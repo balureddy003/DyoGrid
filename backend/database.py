@@ -1,6 +1,8 @@
 import os, glob, json, uuid
 from typing import Optional, Dict, Union, List
 from pymongo import MongoClient
+from azure.identity import DefaultAzureCredential
+from azure.cosmos import CosmosClient, PartitionKey
 
 from dotenv import load_dotenv
 from bson import ObjectId
@@ -201,3 +203,27 @@ class CosmosDB:
                 self.create_team(team)
                 created += 1
         return f"Successfully created {created} teams."
+
+    # ------------------------------------------------------------------
+    # AutoGenBench result helpers
+    # ------------------------------------------------------------------
+
+    def store_bench_result(self, result: dict):
+        """Store a benchmark result document."""
+        container = self.get_container("bench_results")
+        if self.use_local:
+            res = container.insert_one(result)
+            return {"inserted_id": str(res.inserted_id)}
+        else:
+            result["id"] = str(uuid.uuid4())
+            return container.create_item(body=result)
+
+    def get_bench_results(self, team_id: str) -> List[dict]:
+        """Fetch all benchmark results for a team."""
+        container = self.get_container("bench_results")
+        if self.use_local:
+            docs = list(container.find({"team_id": team_id}).sort("timestamp", -1))
+            return convert_objectid(docs)
+        query = "SELECT * FROM c WHERE c.team_id = @teamId ORDER BY c.timestamp DESC"
+        params = [{"name": "@teamId", "value": team_id}]
+        return list(container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
